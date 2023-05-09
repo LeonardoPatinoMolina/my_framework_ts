@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@my_framework/*": ["src/lib/my_framework/*"]
+    },
     "target": "ES5",
     "useDefineForClassFields": true,
     "module": "ESNext",

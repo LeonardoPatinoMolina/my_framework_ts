@@ -1,7 +1,7 @@
 import { MyNode } from "../lib/my_framework/decorators";
-import { MyComponent } from "../lib/my_framework/mycomponent";
+import { MyComponent } from "../lib/my_framework/myComponent";
 
-@MyNode()
+@MyNode({selector:'my-prueva'})
 export class Prueva extends MyComponent{
 
   init(): void {

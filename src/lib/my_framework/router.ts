@@ -1,4 +1,4 @@
-import { MyComponent } from "./mycomponent.ts";
+import { MyComponent } from "./myComponent.ts";
 import { MyDOM } from "./myDOM.ts";
 
 export class MyRouter {

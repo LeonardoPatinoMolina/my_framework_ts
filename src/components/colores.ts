@@ -1,7 +1,6 @@
 import { MyNode } from "../lib/my_framework/decorators";
-import { MyComponent } from "../lib/my_framework/mycomponent";
-
-@MyNode()
+import { MyComponent } from "../lib/my_framework/myComponent";
+@MyNode({selector: 'my-color'})
 export class Colores extends MyComponent{
   build(): string {
     return super.template((_)=>`

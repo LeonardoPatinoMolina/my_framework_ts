@@ -1,5 +1,5 @@
 "use strict"
-import { MyComponent } from "./mycomponent.ts";
+import { MyComponent } from "./myComponent.ts";
 
 export interface MyNode{
   key: string,

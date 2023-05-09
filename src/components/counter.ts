@@ -1,12 +1,13 @@
-import { MyNode } from "../lib/my_framework/decorators";
-import { MyComponent } from "../lib/my_framework/mycomponent";
+import { MyNode } from "@my_framework/decorators";
+import { MyComponent } from "@my_framework/myComponent";
 import { Colores } from "./colores";
 import { Prueva } from "./prueva";
 
 @MyNode({
+  selector: 'my-counter',
   children: [
-    {component: Prueva, selector: 'jabon'},
-    {component: Colores, selector: 'color'},
+    {component: Prueva},
+    {component: Colores},
   ]
 })
 export class Counter extends MyComponent {
@@ -19,7 +20,7 @@ export class Counter extends MyComponent {
   
 
  build(): string {
-    
+  
   return super.template((_)=> `
     <div>
       counter works! hola mindo
@@ -29,7 +30,15 @@ export class Counter extends MyComponent {
       </div>
       <button ${_.on('click',()=>this.update(()=>this.state.count += 1))}>add</button>
       <button ${_.on('click',()=>this.update(()=>this.state.count -= 1))}>Sub</button>
-        ${_.children.jabon({sabor: 'maluco'})}
+        ${_.child['my-prueva']({sabor: 'maluco'})}
+        
+        ${(()=>{
+          let a = '';
+            for (let i = 0; i < 12; i++) {
+              a += _.child['my-prueva']({sabor: 'joder'})
+            }
+            return a
+        })()}
       </div>`);
   }
 }

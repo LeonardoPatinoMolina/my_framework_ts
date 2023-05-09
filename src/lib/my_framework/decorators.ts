@@ -1,6 +1,6 @@
 import { v4 as uuid } from "uuid";
+import { MyComponent } from "./myComponent";
 import { MyDOM } from "./myDOM";
-import { MyComponent } from "./mycomponent";
 
 interface TDataBuilder {
   key: string,
@@ -11,11 +11,11 @@ interface TDataBuilder {
 
 interface ChildI {
   component: typeof MyComponent,
-  selector: string,
   attachMany?: boolean,
   dataBuilder?: TDataBuilder[]
 }
 interface FamilyArgs{
+  selector: string;
   children?: ChildI[],
 }
 
@@ -24,7 +24,7 @@ interface FamilyArgs{
  * Decorador encargado de acoplar el componente al árbol principal y ejecutar métodos 
  * relacionados a su construcción
  */
-export function MyNode(Fargs?: FamilyArgs) {
+export function MyNode(Fargs: FamilyArgs) {
 
   return function <T extends { new(...args: any[]): {} }>(constructor: T) {
     return class extends constructor {
@@ -32,6 +32,8 @@ export function MyNode(Fargs?: FamilyArgs) {
         super(...args);
       }
 
+      static selector: string = Fargs.selector;
+      
       static factory(parentKey: string, key: string, props?: any): any {
         if(MyDOM.isInTree(key)){
           
@@ -46,8 +48,6 @@ export function MyNode(Fargs?: FamilyArgs) {
         const instancia = new this() as MyComponent;
         instancia.props = props;
         instancia.setKey(key);
-        
-        
         //variable auxiliar para verificar los  tipos del interceptor
         let currentTypeComponent: any;
         const arrC = Fargs?.children?.reduce((acc, cur)=>{
@@ -70,7 +70,7 @@ export function MyNode(Fargs?: FamilyArgs) {
             const inst = cur.component.factory(key,interceptorType(nkey),propsC)
             return inst.attach(instancia)
           }
-          return {...acc, [cur.selector]: (propsC?: any)=> wrapper(interceptorT, propsC)}
+          return {...acc, [cur.component.selector]: (propsC?: any)=> wrapper(interceptorT, propsC)}
         },{}) ?? {}
         instancia.childrenAttaching = arrC;
         

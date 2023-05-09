@@ -8,7 +8,8 @@ export interface DirectiveTemplateI {
   on: (name: string, callback: any, options?: ConfigEventI)=>string, 
   inputController: (name: string, stateName: string, callback?: (string: string)=>string)=>string,
   myIf: (predicate: boolean)=>string,
-  children?: any
+  child: {[x:string]:any}
+  children?: (selector:string,builder: any[])=> string
 }
 
 export interface BuildArgsI{
@@ -73,11 +74,10 @@ export class MyComponent {
   parent?: MyComponent;
   
   childrenAttaching: any = {}
-
+  static selector: string
 
   constructor() {
     this.$ = new LifeComponent(this);
-
     this.attach = this.attach.bind(this)
     this.build = this.build.bind(this)
     this.template = this.template.bind(this)
@@ -240,7 +240,7 @@ export class MyComponent {
         return this.inputController.onInputController(stateName,name, callback);
       },
       myIf: this.engineTemplate.myIf,
-      children: this.childrenAttaching
+      child: this.childrenAttaching
     }
 
     let templatetext = template(obj);
