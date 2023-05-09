@@ -13,7 +13,7 @@ export class MyTemplateEngine{
 
 
   myIf(predicate: boolean): string{
-    return predicate ? '': '[todelete]'
+    return predicate ? '': 'if-todelete'
   }
   myMul(predicate: boolean): string{
     return predicate ? '': '[tomultiply]'
@@ -38,5 +38,11 @@ export class MyTemplateEngine{
 
   getTemplateFored(template: string): string{
     return ''
+  }
+
+  getNodeDepured(node: Element){
+    node.querySelectorAll('[if-todelete]').forEach(el=>{
+      el.parentNode?.removeChild(el)
+    })
   }
 }

@@ -1,3 +1,4 @@
+import { v4 as uuid } from "uuid";
 import { MyDOM } from "./myDOM";
 import { MyComponent } from "./mycomponent";
 
@@ -25,48 +26,70 @@ interface FamilyArgs{
  */
 export function MyNode(Fargs?: FamilyArgs) {
 
-
   return function <T extends { new(...args: any[]): {} }>(constructor: T) {
     return class extends constructor {
       constructor(...args: any) {
         super(...args);
       }
 
-      static create$(key: string, props?: any): any {
-        if(MyDOM.memberCompare(key)){
-          const comp = MyDOM.getMember(key!);
+      static factory(parentKey: string, key: string, props?: any): any {
+        if(MyDOM.isInTree(key)){
+          
+          const comp = MyDOM.getMemberNode(key)
           if(!comp) throw new Error('El componente '+key+' no existe en el arbol de componentes')
-          comp.props = props;
-          comp.create();
-          return comp
+          comp.instance.props = props;
+          comp.instance.create();
+          return comp.instance
         }
         
         // Realizar acciones adicionales con la instancia
         const instancia = new this() as MyComponent;
         instancia.props = props;
-
-        const getKey = (key: string)=>{
-          const firm: string[] = key.split('-');
-          instancia.setKey(`${firm[0]}-${firm[1]}-0`)
-          
-          const arrC = Fargs?.children?.reduce((acc, cur, indx)=>{
-            instancia.setKey(`${firm[0]}-${firm[1]}-1`)
-
-            return {...acc, [cur.selector]: (props?: any)=>cur.component.create$(`${firm[0]}-${indx + 1}-0`, props).attach(instancia)}
-
-
-          },{}) ?? {}
-          instancia.childrenAttaching = arrC;
-        }
-        getKey(key);
+        instancia.setKey(key);
         
-        instancia.init();
+        
+        //variable auxiliar para verificar los  tipos del interceptor
+        let currentTypeComponent: any;
+        const arrC = Fargs?.children?.reduce((acc, cur)=>{
+          const nkey = MyDOM.generateNewKey()
+
+          //interceptor encargado de evitar redundancia de key cuando 
+          //una misma clase del componente se renderiza en más de iuna ocación
+          const interceptorT = (oldKey: string)=>{
+            if(cur.component !== currentTypeComponent){
+              currentTypeComponent = cur.component;
+              return oldKey;
+            }
+            const newK = oldKey.split('-')
+            return `comp-${newK[1] + uuid()}-key`
+          }
+
+          //función encargada de ejecutar logica en cada renderizado desde template
+          const wrapper = ( interceptorType: any, propsC?: any,)=>{
+
+            const inst = cur.component.factory(key,interceptorType(nkey),propsC)
+            return inst.attach(instancia)
+          }
+          return {...acc, [cur.selector]: (propsC?: any)=> wrapper(interceptorT, propsC)}
+        },{}) ?? {}
+        instancia.childrenAttaching = arrC;
+        
+        //firma para dom virtual
+        if(parentKey !== '0') {
+          MyDOM.addMember({
+            key,
+            instance: instancia,
+            children: new Map()
+          }, parentKey)
+        }
         MyDOM.initFamily(instancia);
         MyDOM.setMember(instancia);
+        instancia.init();
         instancia.create();
+
         return instancia;
       }
     };//end class extends
   };//end return
-}
 
+}

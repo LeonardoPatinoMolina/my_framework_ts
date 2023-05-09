@@ -1,9 +1,13 @@
 import { MyNode } from "../lib/my_framework/decorators";
 import { MyComponent } from "../lib/my_framework/mycomponent";
+import { Colores } from "./colores";
 import { Prueva } from "./prueva";
 
 @MyNode({
-  children: [{component: Prueva, selector: 'prueva'}]
+  children: [
+    {component: Prueva, selector: 'jabon'},
+    {component: Colores, selector: 'color'},
+  ]
 })
 export class Counter extends MyComponent {
   
@@ -25,10 +29,7 @@ export class Counter extends MyComponent {
       </div>
       <button ${_.on('click',()=>this.update(()=>this.state.count += 1))}>add</button>
       <button ${_.on('click',()=>this.update(()=>this.state.count -= 1))}>Sub</button>
-      
-      <div ${_.myIf(this.state.count > 2)}>
-        ${_.children['prueva']()}
-      </div>
-    </div>`);
+        ${_.children.jabon({sabor: 'maluco'})}
+      </div>`);
   }
 }

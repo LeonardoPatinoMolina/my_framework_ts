@@ -8,7 +8,7 @@ export class Prueva extends MyComponent{
     this.state = {
       show: true,
       form: {
-        field1: 'lorem'
+        field1: 'placeholder'
       }
     }
   }
@@ -26,10 +26,7 @@ export class Prueva extends MyComponent{
       <span ${_.myIf(this.state.show)}>jajai</span>
       <span ${_.myIf(!this.state.show)}>jojou</span>
 
-      <input type="text" ${_.inputController('form','field1',(k: string)=>{
-        console.log(k);
-        return k
-      })}>
+      <input type="text" ${_.inputController('form','field1')}>
       ${this.props?.sabor}
     </div>
     `)

@@ -1,18 +1,29 @@
 "use strict"
 import { MyComponent } from "./mycomponent.ts";
 
+export interface MyNode{
+  key: string,
+  instance: MyComponent
+  children: Map<string,MyNode>,
+}
+
 export class MyDOM {
   static MyDOMtInstancia: MyDOM;
+  static keyCounter: number = 0;
+
+  tree!: {root: MyNode};
 
   /** estructura de datos que almacena las key de los componentes
    * hijos indexados por la key del componente padre
    */
   family: Map<string, Set<string>> = new Map();
-
+  
   nodes: Map<string, MyComponent> = new Map();
+  nodesT: Set<string> = new Set();
   /** raíz del dom
    */
   root?: HTMLElement | Element | null;
+
 
   constructor(root?: HTMLElement | Element | null){
     if(!!MyDOM.MyDOMtInstancia){
@@ -24,20 +35,57 @@ export class MyDOM {
   static createRoot(root: Element | HTMLElement | null): {render:(component: typeof MyComponent)=>void}{
     new MyDOM(root);
     return {
-      render: (component: typeof MyComponent)=>{
-        const comp = component.create$('0-1-0$');
-        comp.render(root);
-      }
+      render: new MyDOM().renderTree
     }
   }//end createRoot
 
+  /**
+   * Método generador de key única para cada nodo del árbol de componentes
+   */
+  private *generateNewkey(): Generator<string>{
+    while(true){
+      const newKey = `comp-${MyDOM.keyCounter}-key`
+      MyDOM.keyCounter += 1;
+      yield newKey;
+    }
+  }
+  private renderTree(component: typeof MyComponent): void{
+    const dom = new MyDOM()
+    dom.tree = {
+      root: {
+        children: new Map(),
+        key: 'comp-root-key', 
+        instance: 0 as any
+      }
+    };
+    const comp = component.factory('0','comp-root-key')
+    comp.setKey('comp-root-key')
+    comp.render(dom.root!)
+    dom.tree.root.instance = comp;
+    dom.nodesT.add('comp-root-key');
+  }
+
+  updateTree(node: MyComponent){
+
+  }
+  /**
+   * Método encargado de generar una nueva key para un componente instanciado
+   */
+  static generateNewKey(): string{
+    const nKey = new MyDOM()
+      .generateNewkey()
+      .next()
+      .value;
+    // console.log(nKey);
+      
+    return nKey;
+  }
   /**
    * Establece el store global 
    */
   static setGlobalStore(store: ()=>void): void{
     store();
   }
-
   /**
    * Obtiene un componente almacenado en los nodos del
    * arbol
@@ -91,12 +139,41 @@ export class MyDOM {
   static setMember(newMember: MyComponent): boolean{
     const dom = new MyDOM();
     if(MyDOM.memberCompare(newMember.key)) return false;
+    // if(MyDOM.isInTree(newMember.key)) return false;
+    dom.nodesT.add(newMember.key);
     dom.nodes.set(newMember.key, newMember)
     return true;
   }
 
-  /**
-   */
+  private searchNode(node: MyNode, target: string): MyNode | undefined {
+    if(node.key === target){
+      return node;
+    }//end if
+    let n;
+    const isThere = node.children.get(target);
+    if(isThere) return isThere;
+
+    node.children.forEach(child=>{
+      n = this.searchNode(child, target)!
+    })
+    return n;
+  }
+  
+  static addMember(args: MyNode,parentKey: string): void{
+    
+    if(MyDOM.isInTree(args.key)) return;
+    const dom = new MyDOM()
+    const node = dom.searchNode(dom.tree.root, parentKey)
+    node?.children.set(args.key,args);
+    dom.nodesT.add(args.key);
+  }
+
+  static getMemberNode(key: string,): MyNode| undefined{
+    
+    const dom = new MyDOM();
+    return dom.searchNode(dom.tree.root,key)
+  }
+
   static removeMember(targetMember:MyComponent): boolean{
     const dom = new MyDOM();
     if(!dom.nodes.has(targetMember.key)) return false;
@@ -110,6 +187,14 @@ export class MyDOM {
   static memberCompare(key: string){
     const dom = new MyDOM();
     return  dom.nodes.has(key);
+  }
+  /**
+   * Verifica si el actual componente existe como 
+   * miembro del árbol
+   */
+  static isInTree(key: string){
+    const dom = new MyDOM();
+    return  dom.nodesT.has(key);
   }
   
   static clearDOM(): void{

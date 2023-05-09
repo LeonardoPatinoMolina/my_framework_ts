@@ -60,16 +60,15 @@ export class EventController{
       esto asegura que ubiquemos el nodo que require el evento de forma adecuada
        */
       let target: Element;
-      target = this.owner.body.querySelector(`[data-keyevent="${e.keyEvent}"]`)!;
+      target = this.owner.body.querySelector(`[data-keyevent="${e.keyEvent}"]`);
       if(target === null && this.owner.body.getAttribute("data-keyevent") === e.keyEvent){
         target = this.owner.body
       }
-
       target.addEventListener(e.name,(evnt)=>{
         e.callback(evnt);
       },{...e.config, signal: abortC.signal});//end addEvnetListener
     })//end foreach
-  }//end addEvents
+  }//end addEvents<button data-event="click" data-keyevent="comp-0-key-event-4">Toggle</button>
 
   /**
    * Método encargado de remover los eventsListeners

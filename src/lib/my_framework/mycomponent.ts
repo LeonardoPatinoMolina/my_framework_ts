@@ -108,7 +108,7 @@ export class MyComponent {
   }
 
   setKey(key: string): void{
-    this._key = `comp-${key}`;
+    this._key = key;
   }
   //STATIC METHODS-------------------
   /**
@@ -118,20 +118,20 @@ export class MyComponent {
    */
   static attachMany(ClassComponent: typeof MyComponent, parent: MyComponent, dataBuilder: any[]){
     throw new Error('implementacion sin terminar')
-    let rootsString = '';
-    dataBuilder.forEach((args)=>{
-      const newComponent = ClassComponent.create$(args);
-      if(!MyDOM.getFamily(parent)?.has( newComponent.key)){
-        MyDOM.setChild(parent, newComponent);
-      }
+    // let rootsString = '';
+    // dataBuilder.forEach((args)=>{
+    //   const newComponent = ClassComponent.factory(args);
+    //   if(!MyDOM.getFamily(parent)?.has( newComponent.key)){
+    //     MyDOM.setChild(parent, newComponent);
+    //   }
 
-      newComponent.parent = parent;
-      rootsString += `<div class="root-component-${newComponent.key}"></div>`;
-    })
-    return rootsString;
+    //   newComponent.parent = parent;
+    //   rootsString += `<div class="root-component-${newComponent.key}"></div>`;
+    // })
+    // return rootsString;
   }
 
-  static create$(key?: string, args?: any): MyComponent{
+  static factory(k:string, key: string,args?: any): any{
     throw new Error('method not implement')
   };
 
@@ -223,7 +223,9 @@ export class MyComponent {
   private string2html = (str: string): Element => {
   let parser = new DOMParser();
   let doc = parser.parseFromString(str, "text/html");
-  return doc.body.children[0];
+  const element = doc.body.children[0];
+  this.engineTemplate.getNodeDepured(element)
+  return element;
 }
 
   /**
@@ -243,7 +245,8 @@ export class MyComponent {
 
     let templatetext = template(obj);
     templatetext = this.engineTemplate.getTemplateDepurated(templatetext);
-    templatetext = this.engineTemplate.getTemplateAfterIfDirective(templatetext);
+    // templatetext = this.engineTemplate.getTemplateAfterIfDirective(templatetext);
+    
     return templatetext;
   }//end template
 
@@ -272,6 +275,7 @@ export class MyComponent {
    //o si el cambio es del estado global
    if(compare && !forceChange) return;
    this.didUnmount();
+   MyDOM.keyCounter = 1
    const previusBody = this.body;
    this.create(true);
    
@@ -302,9 +306,14 @@ export class MyComponent {
        * ha sido desrenderizado por ende podemos removerlo del 
        * arbol
        */
-      this.clear();
+      
+      if(this.isRendered){
+        console.log(this.key,'no attach');
+        this.clear();
+      }
       return;
     };
+
     const fragment = new DocumentFragment();
     fragment.appendChild(this.body);
 
@@ -329,6 +338,8 @@ export class MyComponent {
    * de cambiar de página en el enrutador.
    */
   async clear(){
+    console.log(this.key,'clear');
+    
     this.initialized = false;
     this.eventController.removeEvents();
     this.inputController.removeInputController();
