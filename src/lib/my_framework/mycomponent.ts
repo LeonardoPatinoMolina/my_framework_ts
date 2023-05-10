@@ -77,6 +77,7 @@ export class MyComponent {
   static selector: string
 
   constructor() {
+    
     this.$ = new LifeComponent(this);
     this.attach = this.attach.bind(this)
     this.build = this.build.bind(this)
@@ -131,7 +132,7 @@ export class MyComponent {
     // return rootsString;
   }
 
-  static factory(k:string, key: string,args?: any): any{
+  static factory(parentkey:string, key: string, args?: any): any{
     throw new Error('method not implement')
   };
 
@@ -258,7 +259,7 @@ export class MyComponent {
       MyDOM.setChild(parent, this);
     }
     this.parent = parent;
-    return `<div class="root-component-${this.key}"></div>`;
+    return `<div id="root-${this.key}"></div>`;
   }//end attach
 
   /**
@@ -275,20 +276,7 @@ export class MyComponent {
    //o si el cambio es del estado global
    if(compare && !forceChange) return;
    this.didUnmount();
-   MyDOM.keyCounter = 1
-   const previusBody = this.body;
-   this.create(true);
-   
-    const fr = new DocumentFragment();
-    fr.appendChild(this.body);
-
-    MyDOM.getFamily(this)?.forEach(childKey=>{
-      const child = MyDOM.getMember(childKey)
-      const root = fr.querySelector(`.root-component-${child?.key}`)
-      child?.render(root, false)
-    });
-
-    previusBody.replaceWith(fr);
+   MyDOM.updateTree(this.key);
 
     //establecemos el estado actual como previo en 
     //espera de una proxima comparación
@@ -299,7 +287,7 @@ export class MyComponent {
   /** Encargada de renderizar el componente en
    * la raiz que se estipule
    */
-  render(root: HTMLElement | Element | null, principal = true){
+  render(root: HTMLElement | Element | null , principal = true){
     if(root === null) {
       /**
        * si la raíz no existe significa que el componente
@@ -307,27 +295,24 @@ export class MyComponent {
        * arbol
        */
       
-      if(this.isRendered){
+      // if(this.isRendered){
         console.log(this.key,'no attach');
         this.clear();
-      }
+      // }
       return;
     };
 
-    const fragment = new DocumentFragment();
-    fragment.appendChild(this.body);
-
-    MyDOM.getFamily(this)?.forEach(childKey=>{
-      const child = MyDOM.getMember(childKey)
-      const roott = this.body.querySelector(`.root-component-${child?.key}`);
-      child?.render(roott, false)
-    })
+    // MyDOM.getFamily(this)?.forEach(childKey=>{
+    //   const child = MyDOM.getMember(childKey)
+    //   const roott = this.body.querySelector(`.root-component-${child?.key}`);
+    //   child?.render(roott, false)
+    // })
 
     if(principal){
       root.innerHTML = '';
-      root.appendChild(fragment);
+      root.appendChild(this.body);
     }else{
-      root.replaceWith(fragment);
+      root.replaceWith(this.body);
     }
     this.didMount();
   }//end render
@@ -338,8 +323,6 @@ export class MyComponent {
    * de cambiar de página en el enrutador.
    */
   async clear(){
-    console.log(this.key,'clear');
-    
     this.initialized = false;
     this.eventController.removeEvents();
     this.inputController.removeInputController();

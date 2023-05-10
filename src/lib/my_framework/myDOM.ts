@@ -1,17 +1,18 @@
-"use strict"
+import { v4 as uuid } from "uuid";
 import { MyComponent } from "./myComponent.ts";
 
-export interface MyNode{
+export interface MyNodeI{
   key: string,
   instance: MyComponent
-  children: Map<string,MyNode>,
+  children: Set<string>,
+  parentKey: string
 }
 
 export class MyDOM {
   static MyDOMtInstancia: MyDOM;
   static keyCounter: number = 0;
 
-  tree!: {root: MyNode};
+  tree!: {root: MyNodeI};
 
   /** estructura de datos que almacena las key de los componentes
    * hijos indexados por la key del componente padre
@@ -20,6 +21,7 @@ export class MyDOM {
   
   nodes: Map<string, MyComponent> = new Map();
   nodesT: Set<string> = new Set();
+  treeC: Map<string,MyNodeI> = new Map();
   /** raíz del dom
    */
   root?: HTMLElement | Element | null;
@@ -44,28 +46,49 @@ export class MyDOM {
    */
   private *generateNewkey(): Generator<string>{
     while(true){
-      const newKey = `comp-${MyDOM.keyCounter}-key`
+      const newKey = `comp-${uuid()}-key`
       MyDOM.keyCounter += 1;
       yield newKey;
     }
   }
   private renderTree(component: typeof MyComponent): void{
     const dom = new MyDOM()
-    dom.tree = {
-      root: {
-        children: new Map(),
-        key: 'comp-root-key', 
-        instance: 0 as any
-      }
-    };
-    const comp = component.factory('0','comp-root-key')
-    comp.setKey('comp-root-key')
-    comp.render(dom.root!)
+    const rootNode = {
+      children: new Set(),
+      key: 'comp-root-key', 
+      instance: 0 as any,
+      parentKey: 'root'
+    } as MyNodeI
+    dom.tree = {root: rootNode};
+    dom.treeC.set('comp-root-key',rootNode);
+    const comp = component.factory('root','comp-root-key');
+    
+    comp.setKey('comp-root-key');
     dom.tree.root.instance = comp;
+    dom.treeC.get('comp-root-key')!.instance = comp;
     dom.nodesT.add('comp-root-key');
+    
+    MyDOM.renderTreeCC('root');
   }
 
-  updateTree(node: MyComponent){
+  static updateTree(key: string,){
+    const dom = new MyDOM();
+    const rootNode = key === 'root' ? dom.tree.root : MyDOM.getMemberNode(key)!;
+    let isFirst = true;
+    dom.exploreTree(rootNode!, (node)=>{
+      const previusBody = node.instance.body;
+      if(isFirst){
+        node.instance.create();
+        previusBody.replaceWith(node.instance.body);
+        isFirst = false;
+        return;
+      }
+      const parent = MyDOM.getMemberNode(node.parentKey)!;
+      
+      const r = parent.instance.body.querySelector(`#root-${node.key}`);
+      node.instance.render(r,false)
+
+    })
 
   }
   /**
@@ -126,8 +149,6 @@ export class MyDOM {
     return new MyDOM().family.get(parent.key)
   }
 
-  /**
-   */
   static removeFamily(parent: MyComponent): boolean{
     const dom = new MyDOM();
     return dom.family.delete(parent.key);
@@ -145,33 +166,45 @@ export class MyDOM {
     return true;
   }
 
-  private searchNode(node: MyNode, target: string): MyNode | undefined {
-    if(node.key === target){
-      return node;
-    }//end if
-    let n;
-    const isThere = node.children.get(target);
-    if(isThere) return isThere;
-
+  private exploreTree(node: MyNodeI, action: (node: MyNodeI)=>void):void {
+    action(node);
     node.children.forEach(child=>{
-      n = this.searchNode(child, target)!
+      const childN = MyDOM.getMemberNode(child)!
+      this.exploreTree(childN, action)
     })
-    return n;
+  }
+
+  static renderTreeCC(key: string){
+    const dom = new MyDOM();
+    const rootNode = key === 'root' ? dom.tree.root : MyDOM.getMemberNode(key);
+
+    dom.exploreTree(rootNode!, (node)=>{
+      if(node.key === 'comp-root-key'){
+        node.instance.render(dom.root!, true);
+        return;
+      }
+      const parent = MyDOM.getMemberNode(node.parentKey)!;
+      
+      const r = parent.instance.body.querySelector(`#root-${node.key}`);
+      node.instance.render(r)
+    });
   }
   
-  static addMember(args: MyNode,parentKey: string): void{
-    
+  static addMember(args: MyNodeI): void{
     if(MyDOM.isInTree(args.key)) return;
     const dom = new MyDOM()
-    const node = dom.searchNode(dom.tree.root, parentKey)
-    node?.children.set(args.key,args);
+
     dom.nodesT.add(args.key);
+    dom.treeC.set(args.key, args);
   }
 
-  static getMemberNode(key: string,): MyNode| undefined{
-    
+  static setParent(key: string, parentKey: string){
+    const nodeParent = MyDOM.getMemberNode(parentKey);
+    nodeParent?.children.add(key);
+  }
+  static getMemberNode(key: string,): MyNodeI| undefined{
     const dom = new MyDOM();
-    return dom.searchNode(dom.tree.root,key)
+    return dom.treeC.get(key);
   }
 
   static removeMember(targetMember:MyComponent): boolean{
@@ -194,7 +227,7 @@ export class MyDOM {
    */
   static isInTree(key: string){
     const dom = new MyDOM();
-    return  dom.nodesT.has(key);
+    return  dom.treeC.has(key);
   }
   
   static clearDOM(): void{

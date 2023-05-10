@@ -17,28 +17,24 @@ export class Counter extends MyComponent {
       count: 0
     }
   }
-  
+  ready(): void {
+    console.log('padre');
+    
+  }
 
  build(): string {
   
   return super.template((_)=> `
     <div>
       counter works! hola mindo
-      <div ${_.on('click',()=>{
+      <div id="ol" ${_.on('click',()=>{
       })}>
         ${this.state.count}
       </div>
       <button ${_.on('click',()=>this.update(()=>this.state.count += 1))}>add</button>
       <button ${_.on('click',()=>this.update(()=>this.state.count -= 1))}>Sub</button>
-        ${_.child['my-prueva']({sabor: 'maluco'})}
-        
-        ${(()=>{
-          let a = '';
-            for (let i = 0; i < 12; i++) {
-              a += _.child['my-prueva']({sabor: 'joder'})
-            }
-            return a
-        })()}
-      </div>`);
+      ${_.child['my-prueva']()}
+      </div>`
+    );
   }
 }

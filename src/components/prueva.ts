@@ -12,6 +12,10 @@ export class Prueva extends MyComponent{
       }
     }
   }
+  ready(): void {
+    console.log('hijo');
+    
+  }
   build(): string {
 
     const epa = ()=>{
