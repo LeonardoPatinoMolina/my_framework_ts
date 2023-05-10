@@ -1,3 +1,4 @@
+import { ArgsAttach, ChildrenAttachingI, DataBuilder } from "./decorators.ts";
 import { ConfigEventI, EventController } from "./eventController.ts";
 import { InputController } from "./inputController.ts";
 import { LifeComponent } from "./lifeComponent.ts";
@@ -5,11 +6,11 @@ import { MyDOM } from "./myDOM.js";
 import { MyTemplateEngine } from "./myTemplateEngine.ts";
 
 export interface DirectiveTemplateI {
-  on: (name: string, callback: any, options?: ConfigEventI)=>string, 
+  on: (name: keyof HTMLElementEventMap, callback: any, options?: ConfigEventI)=>string, 
   inputController: (name: string, stateName: string, callback?: (string: string)=>string)=>string,
   myIf: (predicate: boolean)=>string,
-  child: {[x:string]:any}
-  children?: (selector:string,builder: any[])=> string
+  child: {[x: string]: (args?: ArgsAttach)=>string}
+  children: {[x: string]: (dataBuilder: DataBuilder)=>string}
 }
 
 export interface BuildArgsI{
@@ -73,7 +74,7 @@ export class MyComponent {
   
   parent?: MyComponent;
   
-  childrenAttaching: any = {}
+  childAttaching: ChildrenAttachingI = {child: 0 as any, children: 0 as any};
   static selector: string
 
   constructor() {
@@ -117,23 +118,17 @@ export class MyComponent {
    * en lote, esto reduce las manipulaciones de DOM de 1-N a 1
    * por acople
    */
-  static attachMany(ClassComponent: typeof MyComponent, parent: MyComponent, dataBuilder: any[]){
-    throw new Error('implementacion sin terminar')
-    // let rootsString = '';
-    // dataBuilder.forEach((args)=>{
-    //   const newComponent = ClassComponent.factory(args);
-    //   if(!MyDOM.getFamily(parent)?.has( newComponent.key)){
-    //     MyDOM.setChild(parent, newComponent);
-    //   }
-
-    //   newComponent.parent = parent;
-    //   rootsString += `<div class="root-component-${newComponent.key}"></div>`;
-    // })
-    // return rootsString;
+  static attachMany(ClassComponent: typeof MyComponent, parent: MyComponent, dataBuilder: ({key: string, props?: any})[]){
+    let rootsString = '';
+    dataBuilder.forEach((args)=>{
+      const instance = ClassComponent.factory(parent.key, args.key, args?.props);
+      rootsString += instance.attach(parent);
+    })
+    return rootsString;
   }
 
-  static factory(parentkey:string, key: string, args?: any): any{
-    throw new Error('method not implement')
+  static factory(parentkey:string, key: string, props?: any): MyComponent{
+    throw new Error('this method is only available from a class derived from the MyComponent class with the MyNode decorator.')
   };
 
   //METHODS------------
@@ -241,7 +236,8 @@ export class MyComponent {
         return this.inputController.onInputController(stateName,name, callback);
       },
       myIf: this.engineTemplate.myIf,
-      child: this.childrenAttaching
+      child: this.childAttaching.child,
+      children: this.childAttaching.children
     }
 
     let templatetext = template(obj);
@@ -340,4 +336,3 @@ export class MyComponent {
     MyDOM.removeMember(this);
   }// end clear
 }
-

@@ -1,8 +1,9 @@
 import { MyNode } from "../lib/my_framework/decorators";
 import { MyComponent } from "../lib/my_framework/myComponent";
+import { ColoresComponent } from "./colores";
 
-@MyNode({selector:'my-prueva'})
-export class Prueva extends MyComponent{
+@MyNode({selector:'my-prueva', children: [ColoresComponent]})
+export class PruevaComponent extends MyComponent{
 
   init(): void {
     this.state = {
@@ -32,6 +33,7 @@ export class Prueva extends MyComponent{
 
       <input type="text" ${_.inputController('form','field1')}>
       ${this.props?.sabor}
+      ${_.child['my-color']({props: {color: '#f1f2f1'}})}
     </div>
     `)
   }

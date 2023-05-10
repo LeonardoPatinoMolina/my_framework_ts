@@ -15,8 +15,18 @@ interface ChildI {
 }
 interface FamilyArgs{
   selector: string;
-  children?: ChildI[],
+  children?: Array<typeof MyComponent>,
 }
+
+export interface ChildrenAttachingI{
+  child: {[x: string]:(args?: ArgsAttach)=>string}
+  children: {[x: string]: (dataBuilder: DataBuilder)=>string}
+}
+export interface ArgsAttach{
+  key?: string,
+  props?: {[x:string]: any}
+}
+export type DataBuilder = Array<{key: string, props?: any}>
 
 
 /**
@@ -33,7 +43,7 @@ export function MyNode(Fargs: FamilyArgs) {
 
       static selector: string = Fargs.selector;
       
-      static factory(parentKey: string, key: string, props?: any): any {
+      static factory(parentKey: string, key: string, props?: any): MyComponent {
         if(MyDOM.isInTree(key) && parentKey !== 'root'){ 
           const comp = MyDOM.getMemberNode(key)
           
@@ -48,6 +58,7 @@ export function MyNode(Fargs: FamilyArgs) {
         instancia.props = props;
         instancia.setKey(key);
 
+        //firma para dom virtual
         const newNode: MyNodeI = {
           key,
           instance: instancia,
@@ -60,28 +71,18 @@ export function MyNode(Fargs: FamilyArgs) {
         }
 
         //variable auxiliar para verificar los  tipos del interceptor
-        let currentTypeComponent: any = MyComponent;
-        let auxCounter: number = 1;
-        const arrC = Fargs?.children?.reduce((acc, cur, indx)=>{
+        const directiveChildren: ChildrenAttachingI = Fargs?.children?.reduce((acc, cur, indx)=>{
+          const parentKeyuninqe = key.split('__')
           
-          const nkey = `comp__${cur.component.selector}__${indx}__key`
+          const nkey = `comp__${this.selector}__${cur.selector}__${parentKeyuninqe[4]}__${indx}__key`
 
           /**
            * interceptor encargado de evitar redundancia de key cuando 
            * una misma clase del componente se renderiza en más de una ocación 
            */
-          const interceptorT = (oldKey: string)=>{
-            if(!MyDOM.isInTree(oldKey)){
-            // if(cur.component !== currentTypeComponent){
-              currentTypeComponent = cur.component;
-              auxCounter = 1;
-              return oldKey;
-            }
-            
-            const i = parseInt(oldKey.split('__')[2])
-            const k = `comp__${cur.component.selector}__${(i + auxCounter)}__key`
-            auxCounter += 1;
-            return k;
+          const interceptorT = (oldKey?: string)=>{
+            if(oldKey) return `comp__${this.selector}__${cur.selector}__${parentKeyuninqe[4]}__${oldKey}__key`
+            return nkey
           }
 
           /**
@@ -90,21 +91,38 @@ export function MyNode(Fargs: FamilyArgs) {
            * al template, en esta capa se dota de su key única además de emparentarlo
            * en el árbol, es a través de este que se injectan las props en le template
            */
-          const wrapperAttach = ( interceptorType: any, propsC?: any,)=>{
-            
-            const childKey = interceptorType(nkey)//obtenemos la key segura
-            const inst = cur.component.factory(key,childKey,propsC);//instanciamos el componente
+          const wrapperAttachOne = (childKey: string, propsC?: any,): string=>{
+            const inst = cur.factory(key,childKey,propsC);//instanciamos el componente
             //emparentamos con el nodo padre
-            const parentNode = MyDOM.getMemberNode(newNode.key)!;
+            const parentNode = MyDOM.getMemberNode(key)!;
             parentNode.children.add(childKey);
             
             return inst.attach(instancia);
           }
-          return {...acc, [cur.component.selector]: (propsC?: any)=> wrapperAttach(interceptorT, propsC)}
-        },{}) ?? {}
-        instancia.childrenAttaching = arrC;
-        
-        //firma para dom virtual
+          const wrapperAttachmany = (builder: DataBuilder): string => {
+            const realiceAttach = builder.reduce((accData,curData)=>{
+              accData += wrapperAttachOne(interceptorT(curData.key), curData.props)
+              return accData;
+            },'')
+            
+            return realiceAttach;
+          }
+
+          return {
+            children: {
+              ...acc.children, 
+              [cur.selector]: (dataBuilder: DataBuilder)=>wrapperAttachmany(dataBuilder)
+            },
+            child: {
+              ...acc.child, 
+              [cur.selector]: (args?: ArgsAttach)=> wrapperAttachOne(interceptorT(args?.key), args?.props)
+            } 
+          }
+        },{child: {}, children: {}} as any) ?? {}
+        if(Fargs?.children?.length){
+          instancia.childAttaching.child = directiveChildren.child;
+          instancia.childAttaching.children = directiveChildren.children;
+        }
         
         MyDOM.initFamily(instancia);
         MyDOM.setMember(instancia);

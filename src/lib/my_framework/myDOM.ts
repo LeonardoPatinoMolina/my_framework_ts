@@ -53,20 +53,21 @@ export class MyDOM {
   }
   private renderTree(component: typeof MyComponent): void{
     const dom = new MyDOM()
+    const firstKey = `comp__root__first__root__0__key`
     const rootNode = {
       children: new Set(),
-      key: 'comp-root-key', 
+      key: firstKey, 
       instance: 0 as any,
       parentKey: 'root'
     } as MyNodeI
     dom.tree = {root: rootNode};
-    dom.treeC.set('comp-root-key',rootNode);
-    const comp = component.factory('root','comp-root-key');
+    dom.treeC.set(firstKey,rootNode);
+    const comp = component.factory('root',firstKey);
     
-    comp.setKey('comp-root-key');
+    comp.setKey(firstKey);
     dom.tree.root.instance = comp;
-    dom.treeC.get('comp-root-key')!.instance = comp;
-    dom.nodesT.add('comp-root-key');
+    dom.treeC.get(firstKey)!.instance = comp;
+    dom.nodesT.add(firstKey);
     
     MyDOM.renderTreeCC('root');
   }
@@ -179,7 +180,7 @@ export class MyDOM {
     const rootNode = key === 'root' ? dom.tree.root : MyDOM.getMemberNode(key);
 
     dom.exploreTree(rootNode!, (node)=>{
-      if(node.key === 'comp-root-key'){
+      if(node.key === 'comp__root__first__root__0__key'){
         node.instance.render(dom.root!, true);
         return;
       }
