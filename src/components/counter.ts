@@ -17,6 +17,7 @@ export class Counter extends MyComponent {
       count: 0,
     }
   }
+  
   ready(): void {
     console.log('padre');
   }
@@ -26,12 +27,12 @@ export class Counter extends MyComponent {
       this.state.count += 1
     })
   }
+
   decrement = () =>{
     this.update(()=>{
       this.state.count -= 1
     })
   }
-
   
   build(): string {
    const colores = Array.from({length: this.state.count}).map((c,i)=>({
@@ -48,7 +49,7 @@ export class Counter extends MyComponent {
       </div>
       <button ${_.on('click',this.increment)}>add</button>
       <button ${_.on('click',this.decrement)}>Sub</button>
-        ${_.children['my-prueva'](colores)}
+        ${count > 3 && _.child['my-about']()}
       </div>`
     );
   }

@@ -118,14 +118,14 @@ export class MyComponent {
    * en lote, esto reduce las manipulaciones de DOM de 1-N a 1
    * por acople
    */
-  static attachMany(ClassComponent: typeof MyComponent, parent: MyComponent, dataBuilder: ({key: string, props?: any})[]){
-    let rootsString = '';
-    dataBuilder.forEach((args)=>{
-      const instance = ClassComponent.factory(parent.key, args.key, args?.props);
-      rootsString += instance.attach(parent);
-    })
-    return rootsString;
-  }
+  // static attachMany(ClassComponent: typeof MyComponent, parent: MyComponent, dataBuilder: ({key: string, props?: any})[]){
+  //   let rootsString = '';
+  //   dataBuilder.forEach((args)=>{
+  //     const instance = ClassComponent.factory(parent.key, args.key, args?.props);
+  //     rootsString += instance.attach(parent);
+  //   })
+  //   return rootsString;
+  // }
 
   static factory(parentkey:string, key: string, props?: any): MyComponent{
     throw new Error('this method is only available from a class derived from the MyComponent class with the MyNode decorator.')
@@ -178,27 +178,17 @@ export class MyComponent {
     if(!this.initialized) return;
     this.eventController.removeEvents();
     this.inputController.removeInputController();
-    
-    MyDOM.getFamily(this)?.forEach(childKey=>{
-      const child = MyDOM.getMember(childKey)
-      child?.didUnmount();
-    })//end foreach
     this.firstMount = false;
     this.rendered = false;
   }//end didUnmount
 
   /**
-   * Método especializado se ejecuta al des-renderizar el componente
+   * Método especializado se ejecuta cuando el componente se ha actualizado exitosamente
   */
  private async didUpdate(){
   if(this.firstMount) return;
     this.inputController.addInputController();
     this.eventController.addEvents();
-    
-    MyDOM.getFamily(this)?.forEach(childKey=>{
-      const child = MyDOM.getMember(childKey)
-      child?.didUpdate();
-    })//end foreach
     this.rendered = true;
     this.ready();
   }//end didUpdate
@@ -207,7 +197,7 @@ export class MyComponent {
    * Encargada de construir el componente generando el 
    * nodo HTML
    */
-  create(wait?: boolean) {
+  create() {
     //convertimos el template a un nodo del DOM
     const componentNode = this.string2html(this.build());
     this.body = componentNode;
@@ -251,9 +241,6 @@ export class MyComponent {
    * Encargada de acoplar el componente hijo al padre y retornar una raíz para futuro renderizado
    */
   attach(parent: MyComponent): string{
-    if(!MyDOM.getFamily(parent)?.has( this.key)){
-      MyDOM.setChild(parent, this);
-    }
     this.parent = parent;
     return `<div id="root-${this.key}"></div>`;
   }//end attach
@@ -267,17 +254,21 @@ export class MyComponent {
    
    const compare = JSON.stringify(this.state) === JSON.stringify(this.previusState);
    
-  //  console.log('ja');
-   // solo actualizar el componente si el estado a cambiado
-   //o si el cambio es del estado global
-   if(compare && !forceChange) return;
-   this.didUnmount();
-   MyDOM.updateTree(this.key);
+    // solo actualizar el componente si el estado a cambiado
+    //o si el cambio es forzado
+    if(compare && !forceChange) return;
+    MyDOM.notifyInTree(this.key,(node)=>{
+      node.instance.didUnmount();
+    });
+
+    MyDOM.updateTree(this.key);
 
     //establecemos el estado actual como previo en 
     //espera de una proxima comparación
     this.previusState = this.state ? structuredClone(this.state) : undefined;
-    this.didUpdate();
+    MyDOM.notifyInTree(this.key,(node)=>{
+      node.instance.didUpdate();
+    });
   }//end update
 
   /** Encargada de renderizar el componente en
@@ -291,18 +282,14 @@ export class MyComponent {
        * arbol
        */
       
-      // if(this.isRendered){
-        console.log(this.key,'no attach');
-        this.clear();
-      // }
+      MyDOM.notifyInTreeReverse(this.key,(node)=>{
+        node.instance.clear();
+        node.instance.parent && MyDOM.deleteChildNode(node.instance.parent.key, node.instance.key)
+        MyDOM.deleteNode(node.instance.key);
+      })
+      console.log(this.key,'no attach', new MyDOM().treeC);
       return;
     };
-
-    // MyDOM.getFamily(this)?.forEach(childKey=>{
-    //   const child = MyDOM.getMember(childKey)
-    //   const roott = this.body.querySelector(`.root-component-${child?.key}`);
-    //   child?.render(roott, false)
-    // })
 
     if(principal){
       root.innerHTML = '';
@@ -318,21 +305,12 @@ export class MyComponent {
    * se espera que este método sea empleado al momento
    * de cambiar de página en el enrutador.
    */
-  async clear(){
+  clear(){
     this.initialized = false;
     this.eventController.removeEvents();
     this.inputController.removeInputController();
     this.$.dispose();
     this.rendered = false;
     this.firstMount = true;
-    
-    MyDOM.getFamily(this)?.forEach(childKey=>{
-      const child = MyDOM.getMember(childKey)
-      child?.clear();
-    })//end foreach
-    MyDOM.removeFamily(this);
-    //si existe un padre lo desconectamos de su familia
-    this.parent && MyDOM.removeChild(this.parent, this);
-    MyDOM.removeMember(this);
   }// end clear
 }

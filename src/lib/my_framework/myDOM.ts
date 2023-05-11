@@ -1,4 +1,3 @@
-import { v4 as uuid } from "uuid";
 import { MyComponent } from "./myComponent.ts";
 
 export interface MyNodeI{
@@ -10,19 +9,24 @@ export interface MyNodeI{
 
 export class MyDOM {
   static MyDOMtInstancia: MyDOM;
-  static keyCounter: number = 0;
-
-  tree!: {root: MyNodeI};
-
-  /** estructura de datos que almacena las key de los componentes
-   * hijos indexados por la key del componente padre
+  /**
+   * key destinada a indentificar el nodo principal del árbol,
    */
-  family: Map<string, Set<string>> = new Map();
-  
-  nodes: Map<string, MyComponent> = new Map();
+  private firstKey: string = `comp__root__first__root__0__key`
+  /**
+   * Árbol principal donde se aloja la raiz el nodo raíz
+   */
+  tree!: {root: MyNodeI};
+  /**
+   * Almacén de las key de cada nodo existente en el árbol
+   */
   nodesT: Set<string> = new Set();
+  /**
+   * Cuepo completo del árbol declarado de forma horizontal, es decir, las relaciones jerárquicas 
+   * están relacionadas por key
+   */
   treeC: Map<string,MyNodeI> = new Map();
-  /** raíz del dom
+  /** Elemento del DOM el cual actua de raíz para el árbol de nodos
    */
   root?: HTMLElement | Element | null;
 
@@ -41,28 +45,20 @@ export class MyDOM {
     }
   }//end createRoot
 
-  /**
-   * Método generador de key única para cada nodo del árbol de componentes
-   */
-  private *generateNewkey(): Generator<string>{
-    while(true){
-      const newKey = `comp-${uuid()}-key`
-      MyDOM.keyCounter += 1;
-      yield newKey;
-    }
-  }
   private renderTree(component: typeof MyComponent): void{
     const dom = new MyDOM()
-    const firstKey = `comp__root__first__root__0__key`
+    const firstKey = dom.firstKey
     const rootNode = {
       children: new Set(),
       key: firstKey, 
       instance: 0 as any,
       parentKey: 'root'
     } as MyNodeI
+    
     dom.tree = {root: rootNode};
     dom.treeC.set(firstKey,rootNode);
     const comp = component.factory('root',firstKey);
+    
     
     comp.setKey(firstKey);
     dom.tree.root.instance = comp;
@@ -92,81 +88,20 @@ export class MyDOM {
     })
 
   }
-  /**
-   * Método encargado de generar una nueva key para un componente instanciado
-   */
-  static generateNewKey(): string{
-    const nKey = new MyDOM()
-      .generateNewkey()
-      .next()
-      .value;
-    // console.log(nKey);
-      
-    return nKey;
-  }
+
   /**
    * Establece el store global 
    */
   static setGlobalStore(store: ()=>void): void{
     store();
   }
-  /**
-   * Obtiene un componente almacenado en los nodos del
-   * arbol
-   */
-  static getMember(key: string): MyComponent | undefined{
-    return new MyDOM().nodes.get(key)
-  }
-
-  /** Inicialza una familia en el arbol
-   */
-  static initFamily(parent: MyComponent): Set<string> | undefined{
-    const family = new MyDOM().family.set(parent.key, new Set());
-    return  family.get(parent.key)
-  }
 
   /**
-   * Añade un nuevo hijo al atributo family del arbol
-  */
- static setChild(parent: MyComponent, child: MyComponent): void{
-   let family = MyDOM.getFamily(parent);
-   family?.add(child.key);
-  }
-  
-  /**
-   * Remueve un hijo al atributo family del arbol
+   * Método encarga de explorar, es decir, recorrer el un árbol nodo a nodo de forma descendene
+   * partiendo de su nodo raíz
+   * @param node - nodo raiz a partr del cual se selecciona el árbol para explorar
+   * @param action - función destinada a reicibir cada nodo por su parámetro
    */
-  static removeChild(parent: MyComponent, child: MyComponent): void{
-    const family = new MyDOM().family.get(parent?.key);
-    if(family){
-      family.delete(child.key);
-    }
-  }
-
-  /**
-   * Obtiene un Set con todos los hijos del actual componente
-   */
-  static getFamily(parent: MyComponent): Set<string>|undefined{
-    return new MyDOM().family.get(parent.key)
-  }
-
-  static removeFamily(parent: MyComponent): boolean{
-    const dom = new MyDOM();
-    return dom.family.delete(parent.key);
-  }
-
-    /** Añade un nuevo nodo al arbol
-   * y false si no se añadíó correctamente
-   */
-  static setMember(newMember: MyComponent): boolean{
-    const dom = new MyDOM();
-    if(MyDOM.memberCompare(newMember.key)) return false;
-    // if(MyDOM.isInTree(newMember.key)) return false;
-    dom.nodesT.add(newMember.key);
-    dom.nodes.set(newMember.key, newMember)
-    return true;
-  }
-
   private exploreTree(node: MyNodeI, action: (node: MyNodeI)=>void):void {
     action(node);
     node.children.forEach(child=>{
@@ -174,6 +109,49 @@ export class MyDOM {
       this.exploreTree(childN, action)
     })
   }
+  /**
+   * Método encarga de explorar, es decir, recorrer un árbol nodo a nodo de forma ascendente
+   * partiendo de los notos extremos hasta la raiz
+   * @param node - nodo raiz a partr del cual se selecciona el árbol para explorar
+   * @param action - función destinada a reicibir cada nodo por su parámetro
+   */
+  private exploreTreeReverse(node: MyNodeI, action: (node: MyNodeI)=>void):void {
+    node.children.forEach(child=>{
+      const childN = MyDOM.getMemberNode(child)!
+      this.exploreTree(childN, action)
+    })
+    action(node);
+  }
+
+  /**
+   * Método encargado de propagar una notificación en un arbol
+   * especificado de forma descendente partiendo de un nodo raíz
+   * @param keyNode key del nodo raiz del arbol a notificar
+   * @param notify función callback encargada de realizar la notificación
+   */
+  static notifyInTree(keyNode: string, notify: (component: MyNodeI)=>void){
+    const dom = new MyDOM()
+    const nodeTarget = MyDOM.getMemberNode(keyNode)!;
+    dom.exploreTree(nodeTarget,(node)=>{
+      notify(node);
+    })
+  }
+
+    /**
+   * Método encargado de propagar una notificación en un arbol
+   * especificado de forma ascendente partiendo de los nodos exremos
+   * hasta el un nodo raíz
+   * @param keyNode key del nodo raiz del arbol a notificar
+   * @param notify función callback encargada de realizar la notificación
+   */
+  static notifyInTreeReverse(keyNode: string, notify: (component: MyNodeI)=>void){
+    const dom = new MyDOM()
+    const nodeTarget = MyDOM.getMemberNode(keyNode)!;
+    dom.exploreTreeReverse(nodeTarget,(node)=>{
+      notify(node);
+    })
+  }
+
 
   static renderTreeCC(key: string){
     const dom = new MyDOM();
@@ -199,29 +177,26 @@ export class MyDOM {
     dom.treeC.set(args.key, args);
   }
 
-  static setParent(key: string, parentKey: string){
-    const nodeParent = MyDOM.getMemberNode(parentKey);
-    nodeParent?.children.add(key);
-  }
   static getMemberNode(key: string,): MyNodeI| undefined{
     const dom = new MyDOM();
     return dom.treeC.get(key);
   }
 
-  static removeMember(targetMember:MyComponent): boolean{
-    const dom = new MyDOM();
-    if(!dom.nodes.has(targetMember.key)) return false;
-    dom.family.delete(targetMember.key);
-    return  dom.nodes.delete(targetMember.key);
-  }
   /**
-   * Verifica si el actual componente existe como 
-   * miembro del árbol
+   * Método encargado de eliminar un hijo en el nodo padre que se especifique
+   * @param parentKey 
+   * @param targetChildKey 
    */
-  static memberCompare(key: string){
-    const dom = new MyDOM();
-    return  dom.nodes.has(key);
+  static deleteChildNode(parentKey: string, targetChildKey: string){
+    MyDOM.getMemberNode(parentKey)?.children.delete(targetChildKey)
   }
+
+  static deleteNode(key: string){
+    const dom = new MyDOM()
+    dom.treeC.delete(key);
+    dom.nodesT.delete(key);
+  }
+
   /**
    * Verifica si el actual componente existe como 
    * miembro del árbol
@@ -233,7 +208,7 @@ export class MyDOM {
   
   static clearDOM(): void{
     const dom = new MyDOM();
-    dom.nodes.clear();
-    dom.family.clear();
+    dom.nodesT.clear();
+    dom.treeC.clear();
   }
 }

@@ -45,6 +45,11 @@ export function MyNode(Fargs: FamilyArgs) {
       
       static factory(parentKey: string, key: string, props?: any): MyComponent {
         if(MyDOM.isInTree(key) && parentKey !== 'root'){ 
+          if(parentKey === 'root'){
+            const comp1 = MyDOM.getMemberNode(key)!
+            comp1.instance.create();
+            return comp1.instance
+          }
           const comp = MyDOM.getMemberNode(key)
           
           if(!comp) throw new Error('El componente '+key+' no existe en el arbol de componentes')
@@ -123,9 +128,6 @@ export function MyNode(Fargs: FamilyArgs) {
           instancia.childAttaching.child = directiveChildren.child;
           instancia.childAttaching.children = directiveChildren.children;
         }
-        
-        MyDOM.initFamily(instancia);
-        MyDOM.setMember(instancia);
         
         instancia.init();
         instancia.create();

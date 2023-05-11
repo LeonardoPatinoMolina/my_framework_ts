@@ -15,7 +15,6 @@ export class PruevaComponent extends MyComponent{
   }
   ready(): void {
     console.log('hijo');
-    
   }
   build(): string {
 
