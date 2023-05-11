@@ -1,55 +1,54 @@
 import { MyNode } from "@my_framework/decorators";
 import { MyComponent } from "@my_framework/myComponent";
 import { AboutComponent } from "./about";
+import { ColoresComponent } from "./colores";
 import { PruevaComponent } from "./prueva";
 
 @MyNode({
   selector: 'my-counter',
   children: [
     PruevaComponent,
-    AboutComponent
+    AboutComponent,
+    ColoresComponent
   ]
 })
 export class Counter extends MyComponent {
   
-  init(): void {
-    this.state={
-      count: 0,
-    }
-  }
+  numero = 0;
   
   ready(): void {
-    console.log('padre');
+    console.log(this.numero);
   }
 
   increment = () =>{
     this.update(()=>{
-      this.state.count += 1
+      this.numero += 1
     })
   }
 
   decrement = () =>{
     this.update(()=>{
-      this.state.count -= 1
+      this.numero -= 1
     })
   }
   
   build(): string {
-   const colores = Array.from({length: this.state.count}).map((c,i)=>({
-     key: `color${i}`,
+   const colores = Array.from({length: this.numero}).map((c,i)=>({
+     key: `color-${i}`,
      props: {
        color: '#2332'+(i+10)
      }}))
-  const {count} = this.state
-  return super.template((_)=> `
+
+  return this.template((_)=> `
     <div>
       counter works! hola mindo
       <div id="ol">
-        ${count}
+        ${this.numero}
       </div>
       <button ${_.on('click',this.increment)}>add</button>
       <button ${_.on('click',this.decrement)}>Sub</button>
-        ${count > 3 && _.child['my-about']()}
+        ${_.child['my-color']({props: {color: 'red'}})}
+        ${_.children['my-color'](colores)}
       </div>`
     );
   }

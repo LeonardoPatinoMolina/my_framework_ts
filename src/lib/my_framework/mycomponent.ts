@@ -151,7 +151,13 @@ export class MyComponent {
   build(): string{
     throw new Error('Método sin implementar por clase deribada: '+this.key);
   }//end build
-
+  obtenerPropiedades(): object {
+    const propiedades: any = {};
+    const keys = Object.getOwnPropertyNames(this);
+  
+    
+    return propiedades;
+  }
   /**
    * Método especializado se jecuta al renderizar el componente
    */
@@ -256,7 +262,7 @@ export class MyComponent {
    
     // solo actualizar el componente si el estado a cambiado
     //o si el cambio es forzado
-    if(compare && !forceChange) return;
+    // if(compare && !forceChange) return;
     MyDOM.notifyInTree(this.key,(node)=>{
       node.instance.didUnmount();
     });
@@ -287,7 +293,6 @@ export class MyComponent {
         node.instance.parent && MyDOM.deleteChildNode(node.instance.parent.key, node.instance.key)
         MyDOM.deleteNode(node.instance.key);
       })
-      console.log(this.key,'no attach', new MyDOM().treeC);
       return;
     };
 
