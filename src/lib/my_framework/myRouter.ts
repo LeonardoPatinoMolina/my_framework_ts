@@ -1,5 +1,6 @@
 import { MyComponent } from "./myComponent.ts";
 import { MyDOM } from "./myDOM.ts";
+import { RoutesI } from "./types/myRouter.types.ts";
 
 export class MyRouter {
   static instanceRouter: MyRouter;
@@ -8,16 +9,16 @@ export class MyRouter {
  
   private notFound?: typeof MyComponent;
 
-  currentPage!: MyComponent;
+  currentPage!: typeof MyComponent;
 
   pages!: Map<string, typeof MyComponent>;
 
-  constructor(args?: {pages: Map<string, typeof MyComponent>, notFound: typeof MyComponent}){
+  constructor(args?: {routes: RoutesI, notFound?: typeof MyComponent}){
     if(!!MyRouter.instanceRouter){
       return MyRouter.instanceRouter;
     }
 
-    this.pages = args?.pages!;
+    this.pages = new Map(Object.entries(args?.routes!));
 
     //obtenemos los params de cada ruta y 
     //nos deshacemos de su declaración
@@ -53,13 +54,10 @@ export class MyRouter {
     const path = window.location.pathname;
     const page = this.pages.get(path) ?? this.notFound; 
     
-    const dom = new MyDOM();
+    // const dom = new MyDOM();
     MyDOM.clearDOM();
-    const newPage = page ? new page() : undefined;
-    newPage?.render(dom.root!);
-
-    this.currentPage?.clear();
-    this.currentPage = newPage!;
+    const newPage = page ? page : undefined;
+    MyDOM.renderTree(newPage!);
   }
 
   /**

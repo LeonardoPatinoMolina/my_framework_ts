@@ -1,39 +1,14 @@
-import { MyComponent } from "./myComponent";
-import { MyDOM, MyNodeI } from "./myDOM";
-
-interface TDataBuilder {
-  key: string,
-  agrs?: {
-    props?: any
-  }
-}
-
-interface ChildI {
-  component: typeof MyComponent,
-  attachMany?: boolean,
-  dataBuilder?: TDataBuilder[]
-}
-interface FamilyArgs{
-  selector: string;
-  children?: Array<typeof MyComponent>,
-}
-
-export interface ChildrenAttachingI{
-  child: {[x: string]:(args?: ArgsAttach)=>string}
-  children: {[x: string]: (dataBuilder: DataBuilder)=>string}
-}
-export interface ArgsAttach{
-  key?: string,
-  props?: {[x:string]: any}
-}
-export type DataBuilder = Array<{key: string, props?: any}>
+import { ArgsAttachI, ChildrenAttachingI, DataBuilderT, FamilyArgsI } from "@my_framework/types/decorators.types";
+import { MyComponent } from "../myComponent";
+import { MyDOM } from "../myDOM";
+import { MyNodeI } from "../types/myDOM.types";
 
 
 /**
  * Decorador encargado de acoplar el componente al árbol principal y ejecutar métodos 
  * relacionados a su construcción
  */
-export function MyNode(Fargs: FamilyArgs) {
+export function MyNode(Fargs: FamilyArgsI) {
 
   return function <T extends { new(...args: any[]): {} }>(constructor: T) {
     return class extends constructor {
@@ -104,7 +79,7 @@ export function MyNode(Fargs: FamilyArgs) {
             
             return inst.attach(instancia);
           }
-          const wrapperAttachmany = (builder: DataBuilder): string => {
+          const wrapperAttachmany = (builder: DataBuilderT): string => {
             const realiceAttach = builder.reduce((accData,curData)=>{
               accData += wrapperAttachOne(interceptorT(curData.key), curData.props)
               return accData;
@@ -116,11 +91,11 @@ export function MyNode(Fargs: FamilyArgs) {
           return {
             children: {
               ...acc.children, 
-              [cur.selector]: (dataBuilder: DataBuilder)=>wrapperAttachmany(dataBuilder)
+              [cur.selector]: (dataBuilder: DataBuilderT)=>wrapperAttachmany(dataBuilder)
             },
             child: {
               ...acc.child, 
-              [cur.selector]: (args?: ArgsAttach)=> wrapperAttachOne(interceptorT(args?.key), args?.props)
+              [cur.selector]: (args?: ArgsAttachI)=> wrapperAttachOne(interceptorT(args?.key), args?.props)
             } 
           }
         },{child: {}, children: {}} as any) ?? {}

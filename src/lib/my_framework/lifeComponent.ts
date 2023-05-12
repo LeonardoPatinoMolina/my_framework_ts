@@ -1,14 +1,7 @@
 import { MyComponent } from "./myComponent.ts";
+import { DependecyT, DisposeEventT, EffectI } from "./types/lifeComponent.types.ts";
 
-type DisposeEvent = ()=>void;
-type Dependecy = any[] | undefined;
 
-interface EffectI {
-  dispose: DisposeEvent | undefined, 
-  update: DisposeEvent |(()=>DisposeEvent), 
-  dependency: Dependecy, 
-  oldDependency: string
-} 
 
 export class LifeComponent {
 
@@ -26,7 +19,7 @@ export class LifeComponent {
     this.owner = owner;
   }
 
-  effect(callback: ()=>DisposeEvent|void, dependency: Dependecy){
+  effect(callback: ()=>DisposeEventT|void, dependency: DependecyT){
     if(this.owner.isFirstMount){
 
       const newValue: EffectI = {
@@ -50,7 +43,7 @@ export class LifeComponent {
     return this;
   }//end $
 
-  private updateEffect(dependency: Dependecy){
+  private updateEffect(dependency: DependecyT){
     this.effects.forEach((eff)=>{
       if (!this.checkChange(eff?.dependency, dependency)) return;
       eff?.dispose && eff?.dispose();
@@ -79,7 +72,7 @@ export class LifeComponent {
   /** Encargada de evaluar si las dependencias del
    * presente evento de actualización han mutado
    */
-  private checkChange(oldDependency: Dependecy, dependency: Dependecy): boolean{
+  private checkChange(oldDependency: DependecyT, dependency: DependecyT): boolean{
     if (dependency === undefined) return true;
     if (dependency.length === 0) return false;
 

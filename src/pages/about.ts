@@ -1,6 +1,6 @@
-import { MyNode } from "@my_framework/decorators";
+import { MyNode } from "@my_framework/decorators/decorators";
 import { MyComponent } from "@my_framework/myComponent";
-import { PruevaComponent } from "./prueva";
+import { PruevaComponent } from "../components/prueva";
 
 @MyNode({
   selector: 'my-about',
@@ -8,10 +8,10 @@ import { PruevaComponent } from "./prueva";
 })
 export class AboutComponent extends MyComponent{
   build(): string {
-    return super.template((_)=>`
+    return this.template((_)=>`
       <div>
         joder claro que si esto es el about
-        ${_.child['my-prueva']()}
+        ${_.child['my-prueva']({props: {sabor: 'jodeeeeeer'}})}
       <div>    
     `);
   }  

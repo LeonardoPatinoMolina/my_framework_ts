@@ -1,17 +1,5 @@
 import { MyComponent } from "./myComponent.ts";
-
-export interface ConfigEventI {
-  capture?: boolean, 
-  passive?: boolean, 
-  once?: boolean
-}
-
-interface HandlerI {
-  keyEvent: string, 
-  name: string, 
-  callback: (e: any)=>void, 
-  config?: ConfigEventI
-}
+import { ConfigEventI, EventHandlerI } from "./types/eventController.types.ts";
 
 /**
  * @class EventController
@@ -26,7 +14,7 @@ export class EventController{
 
   private abortControllers: Map<string, AbortController> = new Map();
 
-  private eventHandlers: Map<string, HandlerI> = new Map();
+  private eventHandlers: Map<string, EventHandlerI> = new Map();
 
   constructor(owner: MyComponent){
     this.owner = owner;
@@ -44,7 +32,7 @@ export class EventController{
     });
     this.counterKeyEvent += 1;
     
-    return `data-event="${name}" data-keyevent="${keyEvent}"`
+    return ` data-event="${name}" data-keyevent="${keyEvent}" `
   }//end onEvent
 
   /**

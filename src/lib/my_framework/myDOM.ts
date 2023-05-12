@@ -1,11 +1,5 @@
 import { MyComponent } from "./myComponent.ts";
-
-export interface MyNodeI{
-  key: string,
-  instance: MyComponent
-  children: Set<string>,
-  parentKey: string
-}
+import { MyNodeI } from "./types/myDOM.types.ts";
 
 export class MyDOM {
   static MyDOMtInstancia: MyDOM;
@@ -41,11 +35,11 @@ export class MyDOM {
   static createRoot(root: Element | HTMLElement | null): {render:(component: typeof MyComponent)=>void}{
     new MyDOM(root);
     return {
-      render: new MyDOM().renderTree
+      render: MyDOM.renderTree
     }
   }//end createRoot
 
-  private renderTree(component: typeof MyComponent): void{
+  static renderTree(component: typeof MyComponent): void{
     const dom = new MyDOM()
     const firstKey = dom.firstKey
     const rootNode = {
@@ -65,7 +59,7 @@ export class MyDOM {
     dom.treeC.get(firstKey)!.instance = comp;
     dom.nodesT.add(firstKey);
     
-    MyDOM.renderTreeCC('root');
+    dom.renderTreeCC('root');
   }
 
   static updateTree(key: string,){
@@ -153,12 +147,12 @@ export class MyDOM {
   }
 
 
-  static renderTreeCC(key: string){
+  private renderTreeCC(key: string){
     const dom = new MyDOM();
     const rootNode = key === 'root' ? dom.tree.root : MyDOM.getMemberNode(key);
 
     dom.exploreTree(rootNode!, (node)=>{
-      if(node.key === 'comp__root__first__root__0__key'){
+      if(node.key === dom.firstKey){
         node.instance.render(dom.root!, true);
         return;
       }
@@ -208,6 +202,11 @@ export class MyDOM {
   
   static clearDOM(): void{
     const dom = new MyDOM();
+    if(dom.tree === undefined) return;
+    
+    dom.exploreTreeReverse(dom.tree.root,(node)=>{
+      node.instance.clear();
+    })
     dom.nodesT.clear();
     dom.treeC.clear();
   }

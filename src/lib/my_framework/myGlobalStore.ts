@@ -1,14 +1,12 @@
-import { MyComponent } from "./myComponent.ts";
-   interface Reducer {
-    [x: string]: (data: any, payload: any)=>void
-  }
-   type Action = (payload: any)=>void;
+import { MyShelf } from "./myShelf";
+import { ObserverI } from "./types/myGlobalStore.types";
 
 export class MyGlobalStore {
   static globalStoreInstance: MyGlobalStore;
 
-  store: Map<string, MyShelf> = new Map();
-  observers: Map<string, Set<MyComponent>> = new Map();
+  store: Map<string, MyShelf<any>> = new Map();
+  observers: Map<string, Set<ObserverI>> = new Map();
+  observersN: Map<string, Set<string>> = new Map();
 
   constructor() {
     if (!!MyGlobalStore.globalStoreInstance) {
@@ -19,111 +17,73 @@ export class MyGlobalStore {
   /**
    * Establece la configuración egenral de la store global
    */
-  static configStore(config: {reducers: {[x: string]: MyShelf}}): ()=>void {
-    return ()=>{
+  static configStore(config: {
+    reducers: { [key: string]: MyShelf<any> };
+  }): () => void {
+    return () => {
       const gStore = new MyGlobalStore();
       gStore.store = new Map(Object.entries(config.reducers));
-    }
+    };
   }
 
   /**
    * Método encargado de despachar los eventos
    * de actualización en base a un reducerPath
-   * @param {string} shelfName
    */
-  static dispatch(shelfName: string) {
-    const gStore = new MyGlobalStore()
-    const obs = gStore.observers.get(shelfName)
-    if(obs){
-      gStore.observers.get(shelfName)?.forEach(o=>{
+  static dispatch(shelfName: string): void {
+    const gStore = new MyGlobalStore();
+    const obs = gStore.observers.get(shelfName);
+    if (obs) {
+      const sh = gStore.getShelf(shelfName);
+      gStore.observers.get(shelfName)?.forEach((o) => {
         //forzamos un actualización de los observers
-        o.update(()=>{}, true)
+        o.storeNotify({data: sh?.data, shelf: shelfName});
       });
     }
-  }//end dispatch
+  } //end dispatch
 
+  private getShelf(shlefName: string): MyShelf<any> | undefined{
+    const shelf = this.store.get(shlefName);
+    return shelf;
+  }
   /**
    * Método que subscribe componentes al store global
    */
-  static subscribe(shelfName: string, observer: MyComponent){
+  static subscribe<T = any>(shelfName: string, observer: ObserverI): T {
     const gStore = new MyGlobalStore();
-    const myStore = gStore.store.get(shelfName);
-    if(myStore){
-      const obs = gStore.observers.get(shelfName);
-      if(obs){
-        obs.add(observer);
-      }else gStore.observers.set(shelfName, new Set<MyComponent>().add(observer))
-      // gStore.observers.set(shelfName,  obs.set ;
-      if(observer.globalStore){
-        observer.globalStore = {
-          ...observer.globalStore,
-          [myStore.name]: myStore.data
-        };
-      }else{
-        observer.globalStore = {[myStore.name]: myStore.data}
-      }
-      return myStore.data;
+    const myShelf = gStore.store.get(shelfName);
+    if (!myShelf) throw new Error(
+      `store inexistente: la store identificada con el nombre ${shelfName} no existe`
+    );
 
-    }else throw new Error(`store inexistente: la store identificada con el nombre ${shelfName} no existe`);
-  }//end subscribe
-}//end calss
-
-class MyShelf {
-
-  private keyStore: string;
-
-  private _data: any;
-  private _actions: {[x: string]: Action};
+    const obs = gStore.observers.get(shelfName);
+    if (obs) {
+      obs.add(observer);
+    } else
+      gStore.observers.set(shelfName, new Set<ObserverI>().add(observer));
+    return myShelf.data;
+      
+  } //end subscribe
 
   /**
-   * @param {} args
+   * Método que des subscribe un componentes del store global,
+   *  en caso de desubscribirlo correctamente retorna true, en caso de no encontrar el componente
    */
-  constructor({ name, initialData, reducers }: {name: string, initialData?: any, reducers: Reducer}) {
-    this.keyStore = name;
-    this._data = initialData;
+  static unSubscribe(shelfName: string, observer: ObserverI): boolean {
+    const gStore = new MyGlobalStore();
+    const myShelf = gStore.store.get(shelfName);
+    if (!myShelf)
+      throw new Error(
+        `Shelf inexistente: el shelf identificado con el nombre ${shelfName} no existe`
+      );
 
-    //generamos todos las funciones disparadoras
-    //partiendo de los reducers configurados
-     const actionsArr: any[] = Object.entries(reducers).map(([k, v]) => {
-      return {
-        [`${k}Dispatch`]: (payload: any) => {
-          v(this._data, payload);
-          MyGlobalStore.dispatch(this.keyStore);
-        },
-      };
-    })//end map
-  
-    //convertimo sel arreglo de objetos en un solo objeto
-    this._actions = actionsArr.reduce((acc, cur) => {
-      return { ...acc, ...cur };
-    }, {});
-  }
+    const obs = gStore.observers.get(shelfName);
+    if (!obs)
+      throw new Error(
+        `Shelf sin subscriptores: el shelf identificado con el nombre ${shelfName} no posee ningún subscriptor`
+      );
+    return obs.delete(observer);
+  } //end subscribe
+} //end calss
 
-  get name(){
-    return this.keyStore;
-  }
-  get actions(){
-    return this._actions;
-  }
-  get data(){
-    return this._data
-  }
-}
 
-interface ShelfConfigI{
-  name: string, 
-  initialData: any, 
-  reducers: Reducer
-}
-
-interface shelfReturnI {name: string, shelf: MyShelf, actions: {[x: string]: Action}}
-/**
- */
-export const createShelf = (args: ShelfConfigI): shelfReturnI => {
-  const newShelf = new MyShelf(args)
-  return {
-    name: newShelf.name,
-    shelf: newShelf,
-    actions: newShelf.actions
-  }
-};

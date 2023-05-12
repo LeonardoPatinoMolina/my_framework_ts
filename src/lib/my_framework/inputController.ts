@@ -1,15 +1,7 @@
 import { MyComponent } from "./myComponent.ts";
+import { InputControllerI } from "./types/inputController.types.ts";
 
-interface ControllerI {
-  state: {
-    value: string, 
-    name: string, 
-    stateName: string, 
-    isFocus: boolean
-  };
-  targetKey: string;
-  callback?: (value: string)=>string;
-}
+
 
 export class InputController {
   /** componente propieatario del presente controlador
@@ -24,7 +16,7 @@ export class InputController {
   private abortControllers: Map<string, AbortController> = new Map();
 
 
-  private inputcontrollers: Map<string, ControllerI> = new Map();
+  private inputcontrollers: Map<string, InputControllerI> = new Map();
 
   constructor(owner: MyComponent){
     this.owner = owner;
@@ -33,12 +25,12 @@ export class InputController {
   /** Se eccarga de administrar los selectores necesarios para
    * añadir los escucha de eventos en linea
    */
-  onInputController(stateName: string, name: string, callback?: (value: string)=>string): string{
+  onInputController(stateName: string, name: string, callback?: (value: string)=>string): string {
     const keycontroller = `${this.owner.key}-controller-${this.counterKeyController}`;
 
     if(!this.owner.isInitialized){
 
-      const curValue = this.owner.state[stateName] ? this.owner.state[stateName][name] : undefined;
+      const curValue = this.owner.inputModel[stateName] ? this.owner.inputModel[stateName][name] : undefined;
 
       this.inputcontrollers.set(keycontroller, {
         callback,
@@ -53,7 +45,7 @@ export class InputController {
     }
     this.counterKeyController += 1;
 
-    return `data-controller="input" data-keycontroller="${keycontroller}"`
+    return ` data-controller="input" data-keycontroller="${keycontroller}" `
   }//end onInputController
 
     /**
@@ -86,13 +78,13 @@ export class InputController {
         };
         
         target.value = curValue;
-        this.owner.state = {
-          ...this.owner.state,
-          [controller.state.stateName]:{
+        this.owner.inputModel = {
+          ...this.owner.inputModel,
+          [controller.state.stateName]: {
+            ...this.owner.inputModel[controller.state.stateName],
             [controller.state.name]: curValue
           }
         };
-        
       },{signal: abortC.signal});// end keyup eventlistener
 
       target.addEventListener('focus',()=>{

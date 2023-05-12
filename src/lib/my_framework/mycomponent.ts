@@ -1,22 +1,12 @@
-import { ArgsAttach, ChildrenAttachingI, DataBuilder } from "./decorators.ts";
-import { ConfigEventI, EventController } from "./eventController.ts";
+import { EventController } from "./eventController.ts";
 import { InputController } from "./inputController.ts";
 import { LifeComponent } from "./lifeComponent.ts";
 import { MyDOM } from "./myDOM.js";
 import { MyTemplateEngine } from "./myTemplateEngine.ts";
+import { ChildrenAttachingI } from "./types/decorators.types.ts";
+import { InputModelI } from "./types/inputController.types.ts";
+import { DirectiveTemplateI } from "./types/myComponents.types.ts";
 
-export interface DirectiveTemplateI {
-  on: (name: keyof HTMLElementEventMap, callback: any, options?: ConfigEventI)=>string, 
-  inputController: (name: string, stateName: string, callback?: (string: string)=>string)=>string,
-  myIf: (predicate: boolean)=>string,
-  child: {[x: string]: (args?: ArgsAttach)=>string}
-  children: {[x: string]: (dataBuilder: DataBuilder)=>string}
-}
-
-export interface BuildArgsI{
-  children?: Array<()=>string>,
-  props?: any
-}
 
 export class MyComponent {
 
@@ -34,11 +24,6 @@ export class MyComponent {
    */
   private _key!: string;
 
-  /** espacio de memoria dedicado a almacenar el estado previo del 
-   * componente para veirificaciones de reactividad
-   */
-  private previusState: any;
-
   /** Stores de datos a las cuales se encuentra subscrito el componente,
    * representan el estado global de la app e igualmente 
    * cuentan con la capacidad de persistir entre re renderizados.
@@ -53,14 +38,16 @@ export class MyComponent {
 
   private engineTemplate: MyTemplateEngine = new MyTemplateEngine();
 
+  /**
+   * Propiedad destindad a almacenar el modelo de los inputs que se encuentren en 
+   * existencia en el componente
+   */
+  inputModel!: InputModelI;
+
   /** Propiedades del componente dispuestas
    * representan los datos que son inyectados desde el constructor
    */
   props: any;
-  /** Estado del componente, consiste en una serie
-   * de datos con la capacidad de persistir entre re renderizados.
-   */
-  state: any;
 
   /** Atributo encargado de subscribir lógica al ciclo de
    * vida del componente
@@ -85,7 +72,7 @@ export class MyComponent {
     this.template = this.template.bind(this)
     this.init = this.init.bind(this)
     this.ready = this.ready.bind(this)
-    this.update = this.update.bind(this)
+    this.refresh = this.refresh.bind(this)
   }//end constructor
 
   //GETTERS------------------
@@ -113,22 +100,9 @@ export class MyComponent {
     this._key = key;
   }
   //STATIC METHODS-------------------
-  /**
-   * Metodo encargado de realizar un acoplamiento de componentes
-   * en lote, esto reduce las manipulaciones de DOM de 1-N a 1
-   * por acople
-   */
-  // static attachMany(ClassComponent: typeof MyComponent, parent: MyComponent, dataBuilder: ({key: string, props?: any})[]){
-  //   let rootsString = '';
-  //   dataBuilder.forEach((args)=>{
-  //     const instance = ClassComponent.factory(parent.key, args.key, args?.props);
-  //     rootsString += instance.attach(parent);
-  //   })
-  //   return rootsString;
-  // }
 
   static factory(parentkey:string, key: string, props?: any): MyComponent{
-    throw new Error('this method is only available from a class derived from the MyComponent class with the MyNode decorator.')
+    throw new Error('This method is only available from a class derived from the MyComponent class with the MyNode decorator.')
   };
 
   //METHODS------------
@@ -142,7 +116,7 @@ export class MyComponent {
    * Método encargado de ejecutarse cuando el nodo HTML que 
    * representa al componente se encuentre disponible
    */
-  ready(){/*método que se espera sea sobre escrito */}
+  ready(): void{/*método que se espera sea sobre escrito */}
 
   /**
    * función encargada de ejecutar lógica previa a la 
@@ -151,15 +125,15 @@ export class MyComponent {
   build(): string{
     throw new Error('Método sin implementar por clase deribada: '+this.key);
   }//end build
-  obtenerPropiedades(): object {
-    const propiedades: any = {};
-    const keys = Object.getOwnPropertyNames(this);
-  
-    
-    return propiedades;
-  }
+
   /**
-   * Método especializado se jecuta al renderizar el componente
+   * función encargada de ejecutar lógica previa al desrenderizado definitivo del
+   * componente, es decir durante la eliminación del mismo
+   */
+  destroy(): void{/*método que se espera sea sobre escrito */}//end destroy
+
+  /**
+   * Método especializado se jecuta al finalizar la renderización del componente
    */
   private async didMount(){
     try {
@@ -223,22 +197,21 @@ export class MyComponent {
   /**
    * Encargado de generar la plantilla del componente
    */
-  template(template: (_: DirectiveTemplateI)=>string): string{
+  template(builder: (_: DirectiveTemplateI)=>string): string{
     const obj: DirectiveTemplateI = {
      on: (name, callback, options)=>{
        return this.eventController.onEvent(name, callback, options);
       },
-      inputController: (stateName, name, callback)=>{
-        return this.inputController.onInputController(stateName,name, callback);
+      inputController: (modelName, name, callback)=>{
+        return this.inputController.onInputController(modelName, name, callback);
       },
       myIf: this.engineTemplate.myIf,
       child: this.childAttaching.child,
       children: this.childAttaching.children
     }
 
-    let templatetext = template(obj);
+    let templatetext = builder(obj);
     templatetext = this.engineTemplate.getTemplateDepurated(templatetext);
-    // templatetext = this.engineTemplate.getTemplateAfterIfDirective(templatetext);
     
     return templatetext;
   }//end template
@@ -255,14 +228,9 @@ export class MyComponent {
    * Método encargado de actualizar un componente que lo requiera,
    * es decir, un componente mutable
   */
- update(callback?: ()=>void, forceChange: boolean = false) {
+ refresh(callback?: ()=>void, forceChange: boolean = false) {
    if(callback) callback();
    
-   const compare = JSON.stringify(this.state) === JSON.stringify(this.previusState);
-   
-    // solo actualizar el componente si el estado a cambiado
-    //o si el cambio es forzado
-    // if(compare && !forceChange) return;
     MyDOM.notifyInTree(this.key,(node)=>{
       node.instance.didUnmount();
     });
@@ -271,7 +239,6 @@ export class MyComponent {
 
     //establecemos el estado actual como previo en 
     //espera de una proxima comparación
-    this.previusState = this.state ? structuredClone(this.state) : undefined;
     MyDOM.notifyInTree(this.key,(node)=>{
       node.instance.didUpdate();
     });
@@ -315,6 +282,7 @@ export class MyComponent {
     this.eventController.removeEvents();
     this.inputController.removeInputController();
     this.$.dispose();
+    this.destroy();
     this.rendered = false;
     this.firstMount = true;
   }// end clear

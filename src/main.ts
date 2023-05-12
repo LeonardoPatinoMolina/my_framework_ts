@@ -1,6 +1,13 @@
-import { Counter } from "./components/counter";
-import { MyDOM } from "./lib/my_framework/myDOM";
+import { MyDOM } from "@my_framework/myDOM";
+import { MyRouter } from "@my_framework/myRouter";
+import { ColoresComponent } from "./components/colores";
+import { store } from "./context/store";
+import { ROUTES } from "./pages/routes";
 
-const root = MyDOM.createRoot(document.getElementById('root'));
+MyDOM.createRoot(document.getElementById('root'));
+MyDOM.setGlobalStore(store);
 
-root.render(Counter);
+new MyRouter({
+  notFound: ColoresComponent,
+  routes: ROUTES
+})
