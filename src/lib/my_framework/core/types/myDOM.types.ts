@@ -1,4 +1,4 @@
-import { MyComponent } from "@my_framework/myComponent"
+import { MyComponent } from "@my_framework/core/myComponent"
 
 export interface MyNodeI{
   key: string,

@@ -1,31 +1,32 @@
-import { MyNode } from "@my_framework/decorators/decorators";
-import { MyComponent } from "@my_framework/myComponent";
-import { MyGlobalStore } from "@my_framework/myGlobalStore";
-import { MyRouter } from "@my_framework/myRouter";
-import { ObserverI } from "@my_framework/types/myGlobalStore.types";
+import { MyComponent } from "@my_framework/core/myComponent";
+import { MyNode } from "@my_framework/decorators/myNode";
+import { MyRouter } from "@my_framework/router/myRouter";
 import { ColoresComponent } from "../components/colores";
 import { PruevaComponent } from "../components/prueva";
+import { HolaService } from "../services/Hola";
+
 
 @MyNode({
   selector: 'my-counter',
   children: [
     PruevaComponent,
     ColoresComponent
-  ]
+  ],
+  services: [HolaService]
 })
-export class CounterComponent extends MyComponent implements ObserverI {
+export class CounterComponent extends MyComponent {
   
-  epale: string[] = MyGlobalStore.subscribe('user',this);
   numero = 0;
-  
-  storeNotify(): void {
-    this.refresh()
-  }
 
-  destroy(): void {
-    MyGlobalStore.unSubscribe('user',this);
+  saludo: HolaService;
+
+  constructor(svc: any){
+    super()
+    console.log(svc);
+    this.saludo = svc.saludo;
   }
   
+
   increment = () =>{
     this.refresh(()=>{
       this.numero += 1
@@ -37,27 +38,35 @@ export class CounterComponent extends MyComponent implements ObserverI {
       this.numero -= 1
     })
   }
+
+  changeM=()=>{
+    this.saludo.cambiarSaludo(`${this.numero}`)
+  }
+
+  saludar=() =>{
+    this.saludo.saludar();
+  }
   
   build(): string {
-   const colores = Array.from({length: this.numero}).map((_,i)=>({
-     key: `color-${i}`,
-     props: {
-       color: '#2332'+(i+10)
-     }}))
-
+  //  const colores = Array.from({length: this.numero}).map((_,i)=>({
+  //    key: `color-${i}`,
+  //    props: {
+  //      color: '#2332'+(i+10)
+  //    }}))
   return this.template((_)=> `
     <div>
       counter works! hola mindo
       <div id="ol">
         ${this.numero}
         <br>
-        ${this.epale}
       </div>
       <button ${_.on('click',this.increment)}>add</button>
       <button ${_.on('click',this.decrement)}>Sub</button>
+      <br>
+      <button ${_.on('click',this.changeM)}>Cambiar SALUDO</button>
+      <button ${_.on('click',this.saludar)}>SALUDAR</button>
       <button ${_.on('click',()=>{MyRouter.go('/about')})}>navigate to about</button>
-        ${_.child['my-color']({props: {color: 'red'}})}
-        ${_.children['my-color'](colores)}
+      ${_.child['my-prueva']()}
       </div>`
     );
   }

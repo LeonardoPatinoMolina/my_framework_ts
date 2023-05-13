@@ -1,9 +1,9 @@
+import { ChildrenAttachingI } from "../decorators/types/myNode.types.ts";
 import { EventController } from "./eventController.ts";
 import { InputController } from "./inputController.ts";
 import { LifeComponent } from "./lifeComponent.ts";
 import { MyDOM } from "./myDOM.js";
 import { MyTemplateEngine } from "./myTemplateEngine.ts";
-import { ChildrenAttachingI } from "./types/decorators.types.ts";
 import { InputModelI } from "./types/inputController.types.ts";
 import { DirectiveTemplateI } from "./types/myComponents.types.ts";
 
@@ -52,7 +52,7 @@ export class MyComponent {
   /** Atributo encargado de subscribir lógica al ciclo de
    * vida del componente
    */
-  $!: LifeComponent;
+  $: LifeComponent = new LifeComponent(this);
 
   /** Nodo HTML al que corresponde el presente componente
    * @type {Element}
@@ -64,14 +64,9 @@ export class MyComponent {
   childAttaching: ChildrenAttachingI = {child: 0 as any, children: 0 as any};
   static selector: string
 
-  constructor() {
-    
-    this.$ = new LifeComponent(this);
+  constructor(svc?: any) {
     this.attach = this.attach.bind(this)
-    this.build = this.build.bind(this)
     this.template = this.template.bind(this)
-    this.init = this.init.bind(this)
-    this.ready = this.ready.bind(this)
     this.refresh = this.refresh.bind(this)
   }//end constructor
 

@@ -1,5 +1,5 @@
-import { MyComponent } from "./myComponent.ts";
-import { MyDOM } from "./myDOM.ts";
+import { MyComponent } from "../core/myComponent.ts";
+import { MyDOM } from "../core/myDOM.ts";
 import { RoutesI } from "./types/myRouter.types.ts";
 
 export class MyRouter {

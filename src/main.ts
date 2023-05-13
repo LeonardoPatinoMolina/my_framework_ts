@@ -1,5 +1,5 @@
-import { MyDOM } from "@my_framework/myDOM";
-import { MyRouter } from "@my_framework/myRouter";
+import { MyDOM } from "@my_framework/core/myDOM";
+import { MyRouter } from "@my_framework/router/myRouter";
 import { ColoresComponent } from "./components/colores";
 import { store } from "./context/store";
 import { ROUTES } from "./pages/routes";

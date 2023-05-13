@@ -1,5 +1,5 @@
-import { MyNode } from "@my_framework/decorators/decorators";
-import { MyComponent } from "@my_framework/myComponent";
+import { MyComponent } from "@my_framework/core/myComponent";
+import { MyNode } from "@my_framework/decorators/myNode";
 import { PruevaComponent } from "../components/prueva";
 
 @MyNode({

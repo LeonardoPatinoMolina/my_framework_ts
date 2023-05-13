@@ -1,5 +1,5 @@
+import { MyNodeI } from "../types/myDOM.types.ts";
 import { MyComponent } from "./myComponent.ts";
-import { MyNodeI } from "./types/myDOM.types.ts";
 
 export class MyDOM {
   static MyDOMtInstancia: MyDOM;

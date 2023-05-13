@@ -1,5 +1,5 @@
+import { InputControllerI } from "../types/inputController.types.ts";
 import { MyComponent } from "./myComponent.ts";
-import { InputControllerI } from "./types/inputController.types.ts";
 
 
 
@@ -66,7 +66,7 @@ export class InputController {
       
       target.value = controller.state.value;
       
-      target.addEventListener('input',(e)=>{
+      target.addEventListener('input',()=>{
       //en caso de existir un callback de constrol, lo ejecutamos
         const newValue = controller.callback ? controller.callback(target.value) : undefined;
         const curValue = newValue ?? target.value;

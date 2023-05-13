@@ -1,4 +1,4 @@
-import { ArgsAttachI, DataBuilderT } from "./decorators.types"
+import { ArgsAttachI, DataBuilderT } from "../decorators/types/myNode.types"
 import { ConfigEventI } from "./eventController.types"
 
 export interface DirectiveTemplateI {

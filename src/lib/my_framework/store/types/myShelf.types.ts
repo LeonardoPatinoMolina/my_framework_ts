@@ -1,4 +1,4 @@
-import { MyShelf } from "@my_framework/myShelf";
+import { MyShelf } from "@my_framework/store/myShelf";
 
 export interface ReducerI<T> {
   [key: string]: (data: T, payload: any) => T;

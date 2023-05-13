@@ -1,7 +1,7 @@
-import { ArgsAttachI, ChildrenAttachingI, DataBuilderT, FamilyArgsI } from "@my_framework/types/decorators.types";
-import { MyComponent } from "../myComponent";
-import { MyDOM } from "../myDOM";
-import { MyNodeI } from "../types/myDOM.types";
+import { MyNodeI } from "@my_framework/core/types/myDOM.types";
+import { ArgsAttachI, ChildrenAttachingI, DataBuilderT, FamilyArgsI } from "@my_framework/decorators/types/myNode.types";
+import { MyComponent } from "../core/myComponent";
+import { MyDOM } from "../core/myDOM";
 
 
 /**
@@ -34,7 +34,11 @@ export function MyNode(Fargs: FamilyArgsI) {
         }
         
         // Realizar acciones adicionales con la instancia
-        const instancia = new this() as MyComponent;
+         let services: any = Fargs.services?.reduce((acc, cur: any)=>{
+          return {...acc, [cur.serviceName]: new cur()}
+        },{});
+        
+        const instancia = new this(services) as MyComponent;
         instancia.props = props;
         instancia.setKey(key);
 

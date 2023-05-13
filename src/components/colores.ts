@@ -1,5 +1,5 @@
-import { MyNode } from "@my_framework/decorators/decorators";
-import { MyComponent } from "@my_framework/myComponent";
+import { MyComponent } from "@my_framework/core/myComponent";
+import { MyNode } from "@my_framework/decorators/myNode";
 import { InputModelI } from "@my_framework/types/inputController.types";
 import { setUserDispatch } from "../context/feature/user";
 

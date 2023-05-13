@@ -1,12 +1,10 @@
 lockfileVersion: 5.4
 
 specifiers:
-  '@types/uuid': ^9.0.1
   typescript: ^5.0.2
   vite: ^4.3.2
 
 devDependencies:
-  '@types/uuid': 9.0.1
   typescript: 5.0.4
   vite: 4.3.5
 
@@ -209,10 +207,6 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
-
-  /@types/uuid/9.0.1:
-    resolution: {integrity: sha512-rFT3ak0/2trgvp4yYZo5iKFEPsET7vKydKF+VRCxlQ9bpheehyAJH89dAkaLEq/j/RZXJIqcgsmPJKUP1Z28HA==}
-    dev: true
 
   /esbuild/0.17.18:
     resolution: {integrity: sha512-z1lix43jBs6UKjcZVKOw2xx69ffE2aG0PygLL5qJ9OS/gy0Ewd1gW/PUQIOIQGXBHWNywSc0floSKoMFF8aK2w==}

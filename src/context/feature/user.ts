@@ -1,4 +1,4 @@
-import { createShelf } from "@my_framework/myShelf";
+import { createShelf } from "@my_framework/store/myShelf";
 
 type UserShelfT = Array<string>
 

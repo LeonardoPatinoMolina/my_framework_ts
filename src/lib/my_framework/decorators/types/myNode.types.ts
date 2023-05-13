@@ -1,4 +1,4 @@
-import { MyComponent } from "@my_framework/myComponent";
+import { MyComponent } from "@my_framework/core/myComponent";
 
 export interface DataBuilderI {
   key: string,
@@ -14,6 +14,7 @@ export interface ChildI {
 export interface FamilyArgsI{
   selector: string;
   children?: Array<typeof MyComponent>,
+  services?: Array<{ new(...args: any[]): {} }>
 }
 
 export interface ChildrenAttachingI{
