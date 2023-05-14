@@ -135,10 +135,10 @@ export class MyComponent {
       if(!this.initialized) {
         this.eventController.addEvents();
         this.inputController.addInputController();
-        this.$.initialize();
         this.initialized = true;
         this.rendered = true;
         this.ready();
+        this.$.initialize();
       }
     } catch (error) {
       console.error(error);

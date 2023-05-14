@@ -1,9 +1,8 @@
 import { MyComponent } from "../lib/my_framework/core/myComponent";
 import { MyNode } from "../lib/my_framework/decorators/myNode";
-import { HolaService } from "../services/Hola";
 import { ColoresComponent } from "./colores";
 
-@MyNode({selector:'my-prueva', children: [ColoresComponent], services: [HolaService]})
+@MyNode({selector:'my-prueva', children: [ColoresComponent]})
 export class PruevaComponent extends MyComponent{
   
 
