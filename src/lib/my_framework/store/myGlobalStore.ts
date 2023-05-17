@@ -1,3 +1,4 @@
+import { cloneDeep } from "@my_framework/shared/cloneDeep";
 import { MyShelf } from "./myShelf";
 import { ObserverI } from "./types/myGlobalStore.types";
 
@@ -37,10 +38,11 @@ export class MyGlobalStore {
       const sh = gStore.getShelf(shelfName);
       gStore.observers.get(shelfName)?.forEach((o) => {
         //forzamos un actualización de los observers
-        o.storeNotify({data: sh?.data, shelf: shelfName});
+        o.storeNotify({data: cloneDeep(sh?.data), shelf: shelfName});
       });
     }
   } //end dispatch
+
 
   private getShelf(shlefName: string): MyShelf<any> | undefined{
     const shelf = this.store.get(shlefName);
@@ -48,10 +50,13 @@ export class MyGlobalStore {
   }
   /**
    * Método que subscribe componentes al store global
+   * @returns Retorna un valor clonado de los datos actuales del shelf, esto para asegurar la consistencia 
+   * en los datos suministrados a través de la store global, en otras palabras, esto no es una referencia, si desea mantener actualizados los datos debe establecer los nuevos datos a tavés del método storeNotify del observer
    */
   static subscribe<T = any>(shelfName: string, observer: ObserverI): T {
     const gStore = new MyGlobalStore();
     const myShelf = gStore.store.get(shelfName);
+    
     if (!myShelf) throw new Error(
       `store inexistente: la store identificada con el nombre ${shelfName} no existe`
     );
@@ -59,9 +64,10 @@ export class MyGlobalStore {
     const obs = gStore.observers.get(shelfName);
     if (obs) {
       obs.add(observer);
-    } else
+    } else{
       gStore.observers.set(shelfName, new Set<ObserverI>().add(observer));
-    return myShelf.data;
+    }
+    return cloneDeep(myShelf.data);
       
   } //end subscribe
 

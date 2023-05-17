@@ -8,16 +8,18 @@ export class ColoresComponent extends MyComponent{
   inputModel: InputModelI = {
     model: {
       uno: '',
-      jorro: ''
     }
   };
   
+  ready(): void {
+    console.log('color');
+    
+  }
   build(): string {
     return this.template((_)=>`
       <div style="background-color: ${this.props?.color};">
         colores <p ${_.on('click',()=>{})}>joder</p>
         <input name="uno" type="text" placeholder="color" ${_.inputController('model','uno')}>
-        <input name="uno" type="text" placeholder="color" ${_.inputController('model','jorro')}>
       </div>
     `)
   }

@@ -4,7 +4,7 @@ type UserShelfT = Array<string>
 
 export const userShef = createShelf<UserShelfT>({
   name: 'user',
-  initialData: [],
+  initialData: ['jajai'],
   reducers: {
     setUser: (data, payload: string)=>{
       data.push(payload);

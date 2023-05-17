@@ -1,14 +1,14 @@
 import { MyComponent } from "@my_framework/core/myComponent";
 import { MyNode } from "@my_framework/decorators/myNode";
 
-@MyNode({selector: 'my-user'})
-export class UserComponent extends MyComponent{
+@MyNode({selector: 'notfound'})
+export class _404Component extends MyComponent{
   build(): string {
     return this.template(()=>`
-      <article>
-        <h2>${this.props?.name}</h2>
-        ${this.props?.ch()}
-      <article>
+      <main>
+        <h1>404</h1>
+        <p>Page not found</p>
+      </main>
     `);
   }
 }

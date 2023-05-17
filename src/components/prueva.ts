@@ -5,13 +5,7 @@ import { ColoresComponent } from "./colores";
 @MyNode({selector:'my-prueva', children: [ColoresComponent]})
 export class PruevaComponent extends MyComponent{
   
-
   show: boolean = false;
-  inputModel: any = {
-    form: {
-      field1: 'pla'
-    }
-  };
 
   epa = ()=>{
     this.refresh(()=>{
@@ -26,6 +20,7 @@ export class PruevaComponent extends MyComponent{
       <button ${_.on('click',this.epa)}>Toggle</button>
       <span ${_.myIf(this.show)}>jajai</span>
       <span ${_.myIf(!this.show)}>jojou</span>
+      ${_.child['my-color']()}
     </div>
     `)
   }

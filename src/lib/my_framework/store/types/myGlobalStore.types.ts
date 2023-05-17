@@ -1,3 +1,5 @@
 export interface ObserverI{
-  storeNotify(charge?: {shelf: string, data: any}): void
+  storeNotify(charge?: StoreNotifyI): void
 }
+
+export type StoreNotifyI = {data: any, shelf: string}
