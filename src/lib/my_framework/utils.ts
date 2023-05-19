@@ -1,26 +1,26 @@
 //utilidades destinadas a proyectos venideros com my framework
-
+type OptionsCacheInterceptor = {cacheName: string, revalidate: number}
+type OptionsIndxDBInterceptor = {storeName: string, revalidate?: number, dbName: string}
 /**
  * Función encargada de realizar consultas a servicios api,
  * mientras las almacena en cache para evitar sobre carga de consultas
- * @param {string} urlResponse ruta de consulta de la consulta
- * @param {{cacheName: string, revalidate: number}} options cacheName: es el nombre del storge donde se almacena la cache,
+ * @param urlResponse ruta de consulta de la consulta
+ * @param options cacheName: es el nombre del storge donde se almacena la cache,
  * revalidate:  es el tiempo en minutos que debe transcurrir para que la consulta almacenada en cache sea actualizada con otra consulta
- * @returns {Promise<JSON>}
  */
 export const fetchCacheInterceptor = async (
-  urlResponse,
-  { cacheName, revalidate }
-) => {
+  urlResponse: string,
+  { cacheName, revalidate }: OptionsCacheInterceptor
+): Promise<JSON> => {
   try {
     //verificamos si la ultima consulta de este url tiene tiempo
     //suficiente para ser revalidada, para ello llevamos un
     //control del tiempo con el local storage
     const confirmDate = window.localStorage.getItem(`timeof_${urlResponse}`);
     let isOutTime = false;
-    if (!confirmDate)
+    if (confirmDate === null)
       window.localStorage.setItem(`timeof_${urlResponse}`, `${Date.now()}`);
-    if (Date.now() - parseInt(confirmDate) > 1000 * 60 * 60 * revalidate) {
+    else if (Date.now() - parseInt(confirmDate) > 1000 * 60 * 60 * revalidate) {
       isOutTime = true;
     }
 
@@ -57,57 +57,49 @@ export const fetchCacheInterceptor = async (
  */
 export class FetchingPI {
   /** Nombre de la base de datos donde se almacenan los datos
-   * @type {string}
    */
-  #dbName;
+  private dbName: string;
   
   /** encargado de cancelar peticiones
-   * @type {AbortController}
+   * @type {}
    */
-  #abortController = new AbortController();
+  private abortController: AbortController = new AbortController();
 
   /** Nombre del storage donde se almacenan los datos
-   * @type {string}
    */
-  #storeName;
+  private storeName: string;
 
   /** Tiempo en minutos que debe transcurrir para que la consulta almacenada en cache sea actualizada con otra consulta
-   * @type {number}
    */
-  #revalidate;
+  private revalidate: number;
 
   /** Ruta de consulta a fetching de datos
-   * @type {string}
    */
-  #urlResponse;
+  private urlResponse: string;
   /**
    * @param {string} urlResponse
    * @param {{dbName: string, storeName: string, revalidate?: number}} options
    */
-  constructorfetchPersistenceInterceptor(
-    urlResponse,
-    { dbName, storeName, revalidate = 0 }
+  constructor(
+    urlResponse: string,
+    { dbName, storeName, revalidate = 0 }: OptionsIndxDBInterceptor
   ) {
-    this.#storeName = storeName;
-    this.#urlResponse = urlResponse;
-    this.#revalidate = revalidate;
-    this.#dbName = dbName;
+    this.storeName = storeName;
+    this.urlResponse = urlResponse;
+    this.revalidate = revalidate;
+    this.dbName = dbName;
 
   }
 
   /**realiza la apertura de la base de datos asegurandonos
    * que esté lista para cualquier transacción
-   * @returns {Promise<IDBDatabase>}
    */
-  async #dbReady(){
+  private async dbReady(): Promise<IDBDatabase>{
     return new Promise((resolve, reject) => {
       const indxDB = window.indexedDB;
       if (!indxDB) reject(new Error("no hay indexedDB"));
 
-      /**
-       * @type {IDBOpenDBRequest}
-       */
-      const request = indxDB.open(this.#dbName, 1);
+      const request: IDBOpenDBRequest = indxDB.open(this.dbName, 1);
       request.onerror = (err) => {
         reject(new Error(`error al abrir base de datos: ${err}`));
       };
@@ -130,14 +122,11 @@ export class FetchingPI {
 
   /**
    * Transaccion de consulta de registro en la base de datos en función a una key
-   * @param {IDBDatabase} db
-   * @param {string} key
-   * @returns {Promise<any>}
    */
-  async #dbTransactionGet (db, key){
+  private async dbTransactionGet (db: IDBDatabase, key: string): Promise<any>{
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.#storeName], "readwrite");
-      const store = transaction.objectStore(this.#storeName);
+      const transaction = db.transaction([this.storeName], "readwrite");
+      const store = transaction.objectStore(this.storeName);
       const getRequest = store.get(key);
       getRequest.onerror = (err) => {
         reject(`error en peticion get: ${err}`);
@@ -153,15 +142,11 @@ export class FetchingPI {
   /**
    * Transación de modificacion de registro en base de datos
    * en funcion de una key
-   * @param {IDBDatabase} db
-   * @param {any} data
-   * @param {string} key
-   * @returns {Promise<any>}
    */
-  async #dbTransactionPut(db, data, key){
+  private async dbTransactionPut(db: IDBDatabase, data: any, key: string): Promise<any>{
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction([this.#storeName], "readwrite");
-      const store = transaction.objectStore(this.#storeName);
+      const transaction = db.transaction([this.storeName], "readwrite");
+      const store = transaction.objectStore(this.storeName);
       const putRequest = store.put(data, key);
       putRequest.onerror = (err) => {
         reject(`error en oeticion put: ${err}`);
@@ -172,45 +157,44 @@ export class FetchingPI {
         };
       };
     });
-  }; //end method
 
+  }; //end method
   /**
    * Función encargada de realizar consultas a servicios api,
    * mientras las almacena en indexedDB para evitar sobre carga de consultas
-   * @param {any=} config objeto de configuración del fetch
-   * @returns {Promise<JSON>}
    */
-  async fetchPI(config = {}){
+  async fetchPI(config: RequestInit = {}): Promise<JSON>{
     //verificamos si la ultima consulta de este url se encuentra dentro aun
     //con tiempo antes de ser relavidada
-    const confirmDate = window.localStorage.getItem(`timeof_${this.#urlResponse}`);
+    const confirmDate = window.localStorage.getItem(`timeof_${this.urlResponse}`);
     let isOutTime = false; //true==> lista para revalidar; false==> se pospone la revalidación
     //si es la primera vez que se relaiza esta consulta guardamos el registro
     if (!confirmDate)
-      window.localStorage.setItem(`timeof_${this.#urlResponse}`, `${Date.now()}`);
+      {window.localStorage.setItem(`timeof_${this.urlResponse}`, `${Date.now()}`);}
     //si el tiempo transcurrido es mayor al estipulado en revalidate...
-    if (Date.now() - parseInt(confirmDate) > 1000 * 60 * 60 * this.#revalidate) {
+    else if (Date.now() - parseInt(confirmDate) > 1000 * 60 * 60 * this.revalidate) {
       isOutTime = true;
     }
 
     //consultamos la base de datos local---------------------
 
-    const db = await this.#dbReady();
-    const resultGet = await this.#dbTransactionGet(db, this.#urlResponse);
+    const db = await this.dbReady();
+    const resultGet = await this.dbTransactionGet(db, this.urlResponse);
 
     if (!resultGet || isOutTime) {
       try {
-        const req = await fetch(this.#urlResponse,{
-          ...config, signal: this.#abortController.signal
+        const req = await fetch(this.urlResponse,{
+          ...config, signal: this.abortController.signal
         });
         const response = await req.json();
 
-        await this.#dbTransactionPut(db, response, this.#urlResponse);
+        await this.dbTransactionPut(db, response, this.urlResponse);
 
-        window.localStorage.setItem(`timeof_${this.#urlResponse}`, `${Date.now()}`);
+        window.localStorage.setItem(`timeof_${this.urlResponse}`, `${Date.now()}`);
         return response;
       } catch (error) {
         console.error("fetchPersistenceInterceptor error: ", error);
+        throw error;
       }
     } else {
       return resultGet;
@@ -222,6 +206,6 @@ export class FetchingPI {
    * actual
    */
   abortFetchPI(){
-    this.#abortController.abort();
+    this.abortController.abort();
   }
 } //end class
