@@ -1,3 +1,4 @@
+import { MyModuleT } from "../decorators/myModule.ts";
 import { ChildrenAttachingI } from "../decorators/types/myNode.types.ts";
 import { EventController } from "./eventController.ts";
 import { InputController } from "./inputController.ts";
@@ -24,12 +25,7 @@ export class MyComponent {
    */
   private _key!: string;
 
-  /** Stores de datos a las cuales se encuentra subscrito el componente,
-   * representan el estado global de la app e igualmente 
-   * cuentan con la capacidad de persistir entre re renderizados.
-   */
-  private _globalStore: any;
-
+  private _module!: MyModuleT;
   private firstMount: boolean = true;
 
   private eventController: EventController = new EventController(this);
@@ -49,6 +45,8 @@ export class MyComponent {
    */
   props: any;
 
+  styles?: string;
+
   /** Atributo encargado de subscribir lógica al ciclo de
    * vida del componente
    */
@@ -62,7 +60,11 @@ export class MyComponent {
   parent?: MyComponent;
   
   childAttaching: ChildrenAttachingI = {child: 0 as any, children: 0 as any};
-  static selector: string
+  static selector: string;
+  static module: any;
+
+  pendingAttach: Map<string, Map<string,any>> = new Map<string, Map<string,any>>();
+
 
   constructor(svc?: any) {
     this.attach = this.attach.bind(this)
@@ -80,19 +82,15 @@ export class MyComponent {
   get isRendered(){
     return this.rendered;
   }
-  get globalStore(){
-    return this._globalStore;
-  }
   get isFirstMount(){
     return this.firstMount;
   }
   //SETTERS------------------
-  set globalStore(shelf: any){
-    this._globalStore = {...this._globalStore, ...shelf}
-  }
-
   setKey(key: string): void{
     this._key = key;
+  }
+  setModule(module: MyModuleT): void{
+    this._module = module;
   }
   //STATIC METHODS-------------------
 
@@ -127,6 +125,20 @@ export class MyComponent {
    */
   destroy(): void{/*método que se espera sea sobre escrito */}//end destroy
 
+  private addStyles(){
+    if(!this.styles) return;
+      const styleElement = document.createElement('style');
+      styleElement.innerHTML = this.styles;
+      styleElement.id = `${this.key}-style-head`;
+      document.head.appendChild(styleElement);
+  }// end addStyles
+
+  private removeStyles(){
+    if(!this.styles) return;
+    const target = document.getElementById(`${this.key}-style-head`);
+    if(target) document.head.removeChild(target);
+  }
+  
   /**
    * Método especializado se jecuta al finalizar la renderización del componente
    */
@@ -138,6 +150,7 @@ export class MyComponent {
         this.initialized = true;
         this.rendered = true;
         this.ready();
+        this.addStyles();
         this.$.initialize();
       }
     } catch (error) {
@@ -185,7 +198,6 @@ export class MyComponent {
   let parser = new DOMParser();
   let doc = parser.parseFromString(str, "text/html");
   const element = doc.body.children[0];
-  this.engineTemplate.getNodeDepured(element)
   return element;
 }
 
@@ -193,6 +205,7 @@ export class MyComponent {
    * Encargado de generar la plantilla del componente
    */
   template(builder: (_: DirectiveTemplateI)=>string): string{
+
     const obj: DirectiveTemplateI = {
      on: (name, callback, options)=>{
        return this.eventController.onEvent(name, callback, options);
@@ -202,11 +215,13 @@ export class MyComponent {
       },
       myIf: this.engineTemplate.myIf,
       child: this.childAttaching.child,
-      children: this.childAttaching.children
+      children: this.childAttaching.children,
+      myMul: this.engineTemplate.myMul
     }
 
     let templatetext = builder(obj);
     templatetext = this.engineTemplate.getTemplateDepurated(templatetext);
+    templatetext = this.engineTemplate.gettemplateDepuratedStr(templatetext);
     
     return templatetext;
   }//end template
@@ -242,13 +257,14 @@ export class MyComponent {
   /** Encargada de renderizar el componente en
    * la raiz que se estipule
    */
-  render(root: HTMLElement | Element | null , principal = true){
+  render(root: HTMLElement | Element | null , principal = false){
     if(root === null) {
       /**
        * si la raíz no existe significa que el componente
        * ha sido desrenderizado por ende podemos removerlo del 
        * arbol
        */
+      console.log(this.key);
       
       MyDOM.notifyInTreeReverse(this.key,(node)=>{
         node.instance.clear();
@@ -277,8 +293,14 @@ export class MyComponent {
     this.eventController.removeEvents();
     this.inputController.removeInputController();
     this.$.dispose();
+    this.removeStyles();
     this.destroy();
     this.rendered = false;
     this.firstMount = true;
+    
   }// end clear
+}
+
+export function child(){
+  
 }

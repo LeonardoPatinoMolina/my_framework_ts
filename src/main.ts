@@ -1,14 +1,13 @@
 import { MyDOM } from "@my_framework/core/myDOM";
-import { MyRouter } from "@my_framework/router/myRouter";
 import { store } from "./context/store";
-import { _404Component } from "./pages/404";
+import { MyRouter } from "./lib/my_framework/router/myRouter";
 import { ROUTES } from "./pages/routes";
 
-
-MyDOM.createRoot(document.getElementById('root'));
 MyDOM.setGlobalStore(store);
 
+const root = MyDOM.createRoot(document.getElementById('root'));
+// root.render(CounterModule);
+
 new MyRouter({
-  notFound: _404Component,
   routes: ROUTES
 })

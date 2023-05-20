@@ -1,7 +1,7 @@
 import { MyComponent } from "@my_framework/core/myComponent";
-import { MyNode } from "@my_framework/decorators/myNode";
+import { MyNode } from "../../lib/my_framework/decorators/myNode";
 
-@MyNode({selector: 'notfound'})
+@MyNode({selector: 'not-found'})
 export class _404Component extends MyComponent{
   build(): string {
     return this.template(()=>`

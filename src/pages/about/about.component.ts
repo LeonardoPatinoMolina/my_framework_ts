@@ -1,6 +1,6 @@
 import { MyComponent } from "@my_framework/core/myComponent";
 import { MyNode } from "@my_framework/decorators/myNode";
-import { PruevaComponent } from "../components/prueva";
+import { PruevaComponent } from "../../components/prueva";
 
 @MyNode({
   selector: 'my-about',

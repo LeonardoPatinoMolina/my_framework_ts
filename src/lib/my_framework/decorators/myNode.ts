@@ -33,15 +33,23 @@ export function MyNode(Fargs: FamilyArgsI) {
           return comp.instance
         }
         
+        /**
+         * Reservamos este espacio de memoria para realizar operaciones bajo la suposición 
+         * segura de que "this" hace referencia a la clase que actualmente se está decorando, es decir,
+         * hace referencia a la clase del componente que extiende de la clase MyComponent
+         */
+        const proto = this as any
+        
         // Realizar acciones adicionales con la instancia
-         let services: any = Fargs.services?.reduce((acc, cur: any)=>{
-          return {...acc, [cur.serviceName]: new cur()}
+         let services: object = proto.module.services?.reduce((acc: object, curService: any)=>{
+          return {...acc, [curService.serviceName]: new curService()}
         },{});
         
-        const instancia = new this(services) as MyComponent;
+        const instancia: MyComponent = new proto(services);
         instancia.props = props;
+        instancia.styles = Fargs?.styles
         instancia.setKey(key);
-
+        
         //firma para dom virtual
         const newNode: MyNodeI = {
           key,
@@ -50,28 +58,30 @@ export function MyNode(Fargs: FamilyArgsI) {
           parentKey
         }
 
-        if(parentKey !== 'root') {
-          MyDOM.addMember(newNode)
-        }
+        if(parentKey !== 'root') MyDOM.addMember(newNode);
 
         //variable auxiliar para verificar los  tipos del interceptor
-        const directiveChildren: ChildrenAttachingI = Fargs?.children?.reduce((acc, cur, indx)=>{
-          const parentKeyuninqe = key.split('__')
+        const potentialChildren = proto.module?.nodes as typeof MyComponent[];
+        
+        // const directiveChildren: ChildrenAttachingI = Fargs?.children?.reduce((acc, cur, indx)=>{
+        const directiveChildren: ChildrenAttachingI = potentialChildren?.reduce((acc, cur, indx)=>{
+          if(cur.selector === this.selector) return acc;
+          const parentKeyuninqe = key.split('__');
           
-          const nkey = `comp__${this.selector}__${cur.selector}__${parentKeyuninqe[4]}__${indx}__key`
+          const nkey = `comp__${this.selector}__${cur.selector}__${parentKeyuninqe[4]}__${indx}__key`;
 
           /**
            * interceptor encargado de evitar redundancia de key cuando 
            * una misma clase del componente se renderiza en más de una ocación 
            */
           const interceptorT = (oldKey?: string)=>{
-            if(oldKey) return `comp__${this.selector}__${cur.selector}__${parentKeyuninqe[4]}__${oldKey}__key`
-            return nkey
+            if(oldKey) return `comp__${this.selector}__${cur.selector}__${parentKeyuninqe[4]}__${oldKey}__key`;
+            return nkey;
           }
 
           /**
-           * Función wrapper encargada de envolver el proceso de 
-           * attaching del componente, es decir, ejecuta lógica antes de acomplar el componente
+           * Función wrapper encargada de envolver el proceso de attaching del componente, 
+           * es decir, ejecuta lógica antes de acomplar el componente
            * al template, en esta capa se dota de su key única además de emparentarlo
            * en el árbol, es a través de este que se injectan las props en le template
            */
@@ -85,7 +95,7 @@ export function MyNode(Fargs: FamilyArgsI) {
           }
           const wrapperAttachmany = (builder: DataBuilderT): string => {
             const realiceAttach = builder.reduce((accData,curData)=>{
-              accData += wrapperAttachOne(interceptorT(curData.key), curData.props)
+              accData += wrapperAttachOne(interceptorT(curData.key), curData.props);
               return accData;
             },'')
             
@@ -102,8 +112,9 @@ export function MyNode(Fargs: FamilyArgsI) {
               [cur.selector]: (args?: ArgsAttachI)=> wrapperAttachOne(interceptorT(args?.key), args?.props)
             } 
           }
-        },{child: {}, children: {}} as any) ?? {}
-        if(Fargs?.children?.length){
+        },{child: {}, children: {}} as any);
+        
+        if(proto.module?.nodes.length){
           instancia.childAttaching.child = directiveChildren.child;
           instancia.childAttaching.children = directiveChildren.children;
         }
@@ -117,4 +128,3 @@ export function MyNode(Fargs: FamilyArgsI) {
   };//end return
 
 }
-

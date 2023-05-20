@@ -1,3 +1,5 @@
+import { v4 as uuid } from 'uuid';
+
 //utilidades destinadas a proyectos venideros com my framework
 type OptionsCacheInterceptor = {cacheName: string, revalidate: number}
 type OptionsIndxDBInterceptor = {storeName: string, revalidate?: number, dbName: string}
@@ -115,7 +117,7 @@ export class FetchingPI {
       request.onupgradeneeded = ({ target }) => {
         console.log("base de datos creada");
         // @ts-ignore
-        target.result.createObjectStore([this.#storeName]);
+        target.result.createObjectStore([this.storeName]);
       };
     });
   }; //end dbready
@@ -209,3 +211,12 @@ export class FetchingPI {
     this.abortController.abort();
   }
 } //end class
+
+
+/**
+ * Función generadora de id único
+ * @returns id único
+ */
+export function generateGuid(): string{
+  return uuid();
+}

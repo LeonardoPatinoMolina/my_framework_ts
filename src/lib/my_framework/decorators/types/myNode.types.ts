@@ -13,7 +13,7 @@ export interface ChildI {
 }
 export interface FamilyArgsI{
   selector: string;
-  children?: Array<typeof MyComponent>,
+  styles?: string,
   services?: Array<{ new(...args: any[]): {} }>
 }
 

@@ -1,5 +1,5 @@
-import { MyNodeI } from "../types/myDOM.types.ts";
 import { MyComponent } from "./myComponent.ts";
+import { MyNodeI } from "./types/myDOM.types.ts";
 
 export class MyDOM {
   static MyDOMtInstancia: MyDOM;
@@ -32,14 +32,23 @@ export class MyDOM {
     this.root = root;
     MyDOM.MyDOMtInstancia = this;
   }
-  static createRoot(root: Element | HTMLElement | null): {render:(component: typeof MyComponent)=>void}{
+  static createRoot(root: Element | HTMLElement | null): {render:(module: any)=>void}{
     new MyDOM(root);
     return {
       render: MyDOM.renderTree
     }
   }//end createRoot
 
-  static renderTree(component: typeof MyComponent): void{
+
+  static configModules(modules: any[]){
+    modules.forEach(m=>{
+      new m().nodes.forEach((n: typeof MyComponent)=>{
+        n.module = m;
+      })
+    })
+  }
+
+  static renderTree(myModule: any): void{
     const dom = new MyDOM()
     const firstKey = dom.firstKey
     const rootNode = {
@@ -51,8 +60,7 @@ export class MyDOM {
     
     dom.tree = {root: rootNode};
     dom.treeC.set(firstKey,rootNode);
-    const comp = component.factory('root',firstKey);
-    
+    const comp = new myModule().rootNode.factory('root',firstKey);
     
     comp.setKey(firstKey);
     dom.tree.root.instance = comp;
@@ -74,9 +82,7 @@ export class MyDOM {
         isFirst = false;
         return;
       }
-      const parent = MyDOM.getMemberNode(node.parentKey)!;
-      
-      const r = parent.instance.body.querySelector(`#root-${node.key}`);
+      const r = document.getElementById(`root-${node.key}`);
       node.instance.render(r,false)
 
     })
@@ -156,9 +162,7 @@ export class MyDOM {
         node.instance.render(dom.root!, true);
         return;
       }
-      const parent = MyDOM.getMemberNode(node.parentKey)!;
-      
-      const r = parent.instance.body.querySelector(`#root-${node.key}`);
+      const r = document.getElementById(`root-${node.key}`);
       node.instance.render(r)
     });
   }

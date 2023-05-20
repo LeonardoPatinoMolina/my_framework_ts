@@ -1,4 +1,4 @@
-import { ArgsAttachI, DataBuilderT } from "../decorators/types/myNode.types"
+import { ArgsAttachI, DataBuilderT } from "../../decorators/types/myNode.types"
 import { ConfigEventI } from "./eventController.types"
 
 export interface DirectiveTemplateI {
@@ -6,9 +6,10 @@ export interface DirectiveTemplateI {
   inputController: (modelName: string, name: string, callback?: (string: string)=>string)=>string,
   myIf: (predicate: boolean)=>string,
   child: {[x: string]: (args?: ArgsAttachI)=>string}
-  children: {[x: string]: (dataBuilder: DataBuilderT)=>string}
+  children: {[x: string]: (dataBuilder: DataBuilderT)=>string},
+  myMul: any
 }
-
+//
 export interface BuildArgsI{
   children?: Array<()=>string>,
   props?: any

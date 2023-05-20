@@ -1,5 +1,5 @@
-import { MyComponent } from "../core/myComponent.ts";
 import { MyDOM } from "../core/myDOM.ts";
+import { _404Module } from "../template/404/404.module.ts";
 import { RoutesI } from "./types/myRouter.types.ts";
 
 export class MyRouter {
@@ -7,29 +7,28 @@ export class MyRouter {
 
  private routes: Map<string, string[]> = new Map()
  
-  private notFound?: typeof MyComponent;
+  private notFound?: any;
 
-  currentPage!: typeof MyComponent;
+  currentPage!: any;
 
-  pages!: Map<string, typeof MyComponent>;
+  pages!: Map<string, any>;
 
-  constructor(args?: {routes: RoutesI, notFound?: typeof MyComponent}){
+  constructor(args?: {routes: RoutesI[], notFound?: any}){
     if(!!MyRouter.instanceRouter){
       return MyRouter.instanceRouter;
     }
 
-    this.pages = new Map(Object.entries(args?.routes!));
-
     //obtenemos los params de cada ruta y 
     //nos deshacemos de su declaración
     const newPages = new Map()
-    this.pages.forEach((value, k)=>{
+    args?.routes.forEach((route)=>{
+    // this.pages.forEach((value, k)=>{
       //removemos los params de la ruta
-      const newKey = k.slice(0, k.indexOf(':') === -1 ? k.length : k.indexOf(':') - 1);
-      newPages.set(newKey, value);
+      const newKey = route.paths.slice(0, route.paths.indexOf(':') === -1 ? route.paths.length : route.paths.indexOf(':') - 1);
+      newPages.set(newKey, route.modulePage);
 
       //almacenamos los params de la ruta
-      const ss = k.slice(k.indexOf(':') === -1 ? 0 :k.indexOf(':'));
+      const ss = route.paths.slice(route.paths.indexOf(':') === -1 ? 0 :route.paths.indexOf(':'));
       //expreción regular para remover barras
       const rg = /[/]/g;
       const ns = ss.replace(rg,'').split(':');
@@ -37,7 +36,7 @@ export class MyRouter {
       this.routes.set(newKey,ns);
     })//end foreach
     this.pages = newPages;
-    this.notFound = args?.notFound;
+    this.notFound = args?.notFound ?? _404Module;
 
     window.addEventListener('popstate',()=>{
       this.renderRoute();
@@ -52,12 +51,13 @@ export class MyRouter {
 
   private renderRoute(){
     const path = window.location.pathname;
-    const page = this.pages.get(path) ?? this.notFound; 
+    
+    const page = this.pages.get(path);
     
     // const dom = new MyDOM();
     MyDOM.clearDOM();
-    const newPage = page ? page : undefined;
-    MyDOM.renderTree(newPage!);
+    const newPage = page ?? this.notFound;
+    MyDOM.renderTree(newPage);
   }
 
   /**
