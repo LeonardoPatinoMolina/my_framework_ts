@@ -1,5 +1,5 @@
-import { InputControllerI } from "../types/inputController.types.ts";
 import { MyComponent } from "./myComponent.ts";
+import { InputControllerI } from "./types/inputController.types.ts";
 
 
 
@@ -56,10 +56,7 @@ export class InputController {
       this.abortControllers.set(controller.targetKey, abortC);
       
       let target: HTMLInputElement;
-      target = this.owner.body.querySelector(`[data-keycontroller="${controller.targetKey}"]`)!;
-      if(target === null && this.owner.body.getAttribute("data-keycontroller") === controller.targetKey){
-        target = this.owner.body as HTMLInputElement
-      }
+      target = document.querySelector(`[data-keycontroller="${controller.targetKey}"]`)!;
 
       if(controller.state.isFocus) target.focus();
       else target.blur();

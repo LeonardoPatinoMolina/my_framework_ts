@@ -6,7 +6,7 @@ import { MyRouter } from "../../lib/my_framework/router/myRouter";
 export class CounterComponent extends MyComponent {
   
   numero: number = 0
-  color: string = 'blue'
+  
   increment = () =>{
     this.refresh(()=>{
       this.numero++;
@@ -20,25 +20,22 @@ export class CounterComponent extends MyComponent {
   }
   
   build(): string {
-    const validate = this.numero > 3;
-  return this.template((_)=> `
-    <main>
-      counter works! hola mundo
-      <div>
-        ${this.numero}
-      </div>
-      <button ${_.on('click',this.increment)}>
-        add
-      </button>
-      <button ${_.on('click',this.decrement)}>
-        Sub
-      </button>
-      <br>
-      <button ${_.on('click',()=>{MyRouter.go('/about')})}>
-        navigate to about
-      </button>
-        ${_.child['my-color']({props: {color: 'blue', amount: this.numero}})}
+    return this.template((_)=> `
+      <main>
+        counter works! hola mundo
+        <br>
+        <div>${this.numero}</div>
+        <button ${_.on('click',this.increment)}>add</button>
+        <button ${_.on('click',this.decrement)}>Sub</button>
+        <button ${_.on('click',()=>{MyRouter.go('/about')})}>
+          navigate to about
+        </button>
+        <div>
+          asmect
+          <span ${_.myMul(this.numero)} >lorem</span>
+        <div>
       </main>
     `);
   }
 }
+

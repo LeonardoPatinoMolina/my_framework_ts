@@ -48,10 +48,7 @@ export class EventController{
       esto asegura que ubiquemos el nodo que require el evento de forma adecuada
        */
       let target: Element;
-      target = this.owner.body.querySelector(`[data-keyevent="${e.keyEvent}"]`);
-      if(target === null && this.owner.body.getAttribute("data-keyevent") === e.keyEvent){
-        target = this.owner.body
-      }
+      target = document.querySelector(`[data-keyevent="${e.keyEvent}"]`)!;
       target.addEventListener(e.name,(evnt)=>{
         e.callback(evnt);
       },{...e.config, signal: abortC.signal});//end addEvnetListener

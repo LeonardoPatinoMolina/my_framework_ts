@@ -14,3 +14,11 @@ export interface BuildArgsI{
   children?: Array<()=>string>,
   props?: any
 }
+
+
+export interface MyTreeI{
+  name: string,
+  node: any,
+  attr: object,
+  children: MyTreeI[]
+}

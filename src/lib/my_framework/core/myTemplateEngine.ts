@@ -42,7 +42,8 @@ export class MyTemplateEngine{
     });
     node.querySelectorAll(`[mul-to-multiply]`).forEach(el=>{
       const at = el.getAttribute('mul-to-multiply');
-      if(!at)return;
+      
+      if(!at) return;
       const fr = new DocumentFragment();
       let epa: Node[] = Array.from({length: parseInt(at)})
       epa = epa.map((ep)=>{

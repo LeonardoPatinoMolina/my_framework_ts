@@ -5,6 +5,7 @@ import { InputController } from "./inputController.ts";
 import { LifeComponent } from "./lifeComponent.ts";
 import { MyDOM } from "./myDOM.js";
 import { MyTemplateEngine } from "./myTemplateEngine.ts";
+import { MyTree } from "./myTree.ts";
 import { InputModelI } from "./types/inputController.types.ts";
 import { DirectiveTemplateI } from "./types/myComponents.types.ts";
 
@@ -64,6 +65,7 @@ export class MyComponent {
   static module: any;
 
   pendingAttach: Map<string, Map<string,any>> = new Map<string, Map<string,any>>();
+  myTree: MyTree = new MyTree(this);
 
 
   constructor(svc?: any) {
@@ -143,19 +145,15 @@ export class MyComponent {
    * Método especializado se jecuta al finalizar la renderización del componente
    */
   private async didMount(){
-    try {
-      if(!this.initialized) {
-        this.eventController.addEvents();
-        this.inputController.addInputController();
-        this.initialized = true;
-        this.rendered = true;
-        this.ready();
-        this.addStyles();
-        this.$.initialize();
-      }
-    } catch (error) {
-      console.error(error);
-    }
+    if(this.initialized) return;
+    this.eventController.addEvents();
+    this.inputController.addInputController();
+    this.initialized = true;
+    this.rendered = true;
+    this.ready();
+    this.addStyles();
+    this.$.initialize();
+    this.myTree.create();
   }//end didMount
 
   /**
@@ -188,6 +186,8 @@ export class MyComponent {
   create() {
     //convertimos el template a un nodo del DOM
     const componentNode = this.string2html(this.build());
+    if(this.props === undefined)componentNode.setAttribute('data-rootcomponent-outcast','true')
+    else componentNode.setAttribute('data-rootcomponent-outcast','false')
     this.body = componentNode;
   }//end create
 
@@ -245,8 +245,10 @@ export class MyComponent {
       node.instance.didUnmount();
     });
 
-    MyDOM.updateTree(this.key);
-
+    // MyDOM.updateTree(this.key);
+    this.create()
+    this.myTree.update()
+    
     //establecemos el estado actual como previo en 
     //espera de una proxima comparación
     MyDOM.notifyInTree(this.key,(node)=>{
@@ -299,8 +301,4 @@ export class MyComponent {
     this.firstMount = true;
     
   }// end clear
-}
-
-export function child(){
-  
 }
