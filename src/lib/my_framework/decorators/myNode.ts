@@ -28,7 +28,7 @@ export function MyNode(Fargs: FamilyArgsI) {
           const comp = MyDOM.getMemberNode(key)
           
           if(!comp) throw new Error('El componente '+key+' no existe en el arbol de componentes')
-          comp.instance.props = props ?? {};
+          comp.instance.props = props;
           comp.instance.create();
           return comp.instance
         }

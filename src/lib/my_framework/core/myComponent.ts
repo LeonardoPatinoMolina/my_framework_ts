@@ -44,7 +44,7 @@ export class MyComponent {
   /** Propiedades del componente dispuestas
    * representan los datos que son inyectados desde el constructor
    */
-  props: any;
+  props?: any;
 
   styles?: string;
 
@@ -185,9 +185,8 @@ export class MyComponent {
   create() {
     //convertimos el template a un nodo del DOM
     const componentNode = this.string2html(this.build());
-    if(this.props === undefined)componentNode.setAttribute('data-rootcomponent-outcast','true')
-    else componentNode.setAttribute('data-rootcomponent-outcast','false')
-    componentNode.setAttribute('data-rootcomponent-key',this.key)
+    if(this.props !== undefined) componentNode.setAttribute('data-rootcomponent-outcast','true')
+    componentNode.setAttribute('data-rootcomponent-key',this.key);
     this.body = componentNode;
   }//end create
 
@@ -246,10 +245,8 @@ export class MyComponent {
       node.instance.didUnmount();
     });
 
-      // MyDOM.updateTree(this.key);
     this.create()
     const targetRoot = document.querySelector(`[data-rootcomponent-key="${this.key}"]`)
-    // console.log(targetRoot);
     if(!targetRoot) throw new Error('no se encontro el nodo del componente')
     this.myTree.update(targetRoot)
     
@@ -257,31 +254,43 @@ export class MyComponent {
     //establecemos el estado actual como previo en 
     //espera de una proxima comparación
     MyDOM.notifyInTree(this.key,(node)=>{
-      node.instance.didUpdate();
+      // en caso de desrenderizado, ignotat notificaciones
+      if(node.instance.checkUnRender()) return;
+      // en caso de ser la primera montura, notificar didMount();
+      if(node.instance.isFirstMount) node.instance.didMount();
+      // en caso contrario notificar actualización didUpdate();
+      else node.instance.didUpdate();
     });
   }//end update
 
+  /**
+   * Método encargado de verificar si un componente ha sido desrenderizado y lo elimina del árbol 
+   * en consecuencia
+   */
+  checkUnRender(): boolean{
+    const root = document.querySelector(`[data-rootcomponent-key="${this.key}"]`)
+    if(root === null) {
+      /**
+       * si la raíz no existe significa que el componente
+       * ha sido desrenderizado por ende podemos removerlo del 
+       * arbol
+       */
+      console.log(this.key);
+      MyDOM.notifyInTreeReverse(this.key,(node)=>{
+        node.instance.clear();
+        node.instance.parent && MyDOM.deleteChildNode(node.instance.parent.key, node.instance.key)
+        MyDOM.deleteNode(node.instance.key);
+      })
+      return true;
+    };
+    return false
+  }
   
-  /** Encargada de renderizar el componente en
+  /** 
+   * Encargada de renderizar el componente en
    * la raiz que se estipule
    */
   render(root: HTMLElement | Element | null , principal = false){
-    // if(root === null) {
-    //   /**
-    //    * si la raíz no existe significa que el componente
-    //    * ha sido desrenderizado por ende podemos removerlo del 
-    //    * arbol
-    //    */
-    //   console.log(this.key);
-      
-    //   MyDOM.notifyInTreeReverse(this.key,(node)=>{
-    //     node.instance.clear();
-    //     node.instance.parent && MyDOM.deleteChildNode(node.instance.parent.key, node.instance.key)
-    //     MyDOM.deleteNode(node.instance.key);
-    //   })
-    //   return;
-    // };
-
     if(principal){
       root!.innerHTML = '';
       root?.appendChild(this.body);

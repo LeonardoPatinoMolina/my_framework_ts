@@ -85,10 +85,7 @@ export class MyTree {
 
       if(!(element1!.node instanceof Text)){
       const outcasting = element1!.node.getAttribute('data-rootcomponent-outcast');
-      if(outcasting === 'false') {
-        console.log('epa');
-        continue;
-      }
+      if(outcasting) continue; //nos aseguramos que los hijos desamparados no sean reconciliados jeje
     }
     this.reconsiliation(element1!, element2!);
     }

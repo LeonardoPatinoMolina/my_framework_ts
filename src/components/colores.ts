@@ -9,6 +9,9 @@ export class ColoresComponent extends MyComponent{
       <div style="background-color: ${this.props?.color};">
         colores 
         <p ${_.myMul(this.props?.amount ?? 1)}>joder</p>
+        <button ${_.on('click',()=>{
+          alert('joder')
+        })}>alert</button>
       </div>
     `)
   }

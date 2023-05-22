@@ -5,14 +5,17 @@ import { MyNode } from "../lib/my_framework/decorators/myNode";
 export class PruevaComponent extends MyComponent{
   
   show: boolean = false;
-
+init(): void {
+  
+  console.log('prueva');
+}
   epa = ()=>{
     this.refresh(()=>{
       this.show = !this.show
     })
   }
   build(): string {
-
+    
     return super.template((_)=>`
     <div>
       lorem   
