@@ -153,7 +153,6 @@ export class MyComponent {
     this.ready();
     this.addStyles();
     this.$.initialize();
-    this.myTree.create();
   }//end didMount
 
   /**
@@ -188,6 +187,7 @@ export class MyComponent {
     const componentNode = this.string2html(this.build());
     if(this.props === undefined)componentNode.setAttribute('data-rootcomponent-outcast','true')
     else componentNode.setAttribute('data-rootcomponent-outcast','false')
+    componentNode.setAttribute('data-rootcomponent-key',this.key)
     this.body = componentNode;
   }//end create
 
@@ -221,7 +221,7 @@ export class MyComponent {
 
     let templatetext = builder(obj);
     templatetext = this.engineTemplate.getTemplateDepurated(templatetext);
-    templatetext = this.engineTemplate.gettemplateDepuratedStr(templatetext);
+    templatetext = this.engineTemplate.getTemplateAfterDirective(templatetext);
     
     return templatetext;
   }//end template
@@ -231,7 +231,8 @@ export class MyComponent {
    */
   attach(parent: MyComponent): string{
     this.parent = parent;
-    return `<div id="root-${this.key}"></div>`;
+    return this.body.outerHTML;
+    // return `<div id="root-${this.key}"></div>`;
   }//end attach
 
   /**
@@ -245,9 +246,13 @@ export class MyComponent {
       node.instance.didUnmount();
     });
 
-    // MyDOM.updateTree(this.key);
+      // MyDOM.updateTree(this.key);
     this.create()
-    this.myTree.update()
+    const targetRoot = document.querySelector(`[data-rootcomponent-key="${this.key}"]`)
+    // console.log(targetRoot);
+    if(!targetRoot) throw new Error('no se encontro el nodo del componente')
+    this.myTree.update(targetRoot)
+    
     
     //establecemos el estado actual como previo en 
     //espera de una proxima comparación
@@ -256,31 +261,32 @@ export class MyComponent {
     });
   }//end update
 
+  
   /** Encargada de renderizar el componente en
    * la raiz que se estipule
    */
   render(root: HTMLElement | Element | null , principal = false){
-    if(root === null) {
-      /**
-       * si la raíz no existe significa que el componente
-       * ha sido desrenderizado por ende podemos removerlo del 
-       * arbol
-       */
-      console.log(this.key);
+    // if(root === null) {
+    //   /**
+    //    * si la raíz no existe significa que el componente
+    //    * ha sido desrenderizado por ende podemos removerlo del 
+    //    * arbol
+    //    */
+    //   console.log(this.key);
       
-      MyDOM.notifyInTreeReverse(this.key,(node)=>{
-        node.instance.clear();
-        node.instance.parent && MyDOM.deleteChildNode(node.instance.parent.key, node.instance.key)
-        MyDOM.deleteNode(node.instance.key);
-      })
-      return;
-    };
+    //   MyDOM.notifyInTreeReverse(this.key,(node)=>{
+    //     node.instance.clear();
+    //     node.instance.parent && MyDOM.deleteChildNode(node.instance.parent.key, node.instance.key)
+    //     MyDOM.deleteNode(node.instance.key);
+    //   })
+    //   return;
+    // };
 
     if(principal){
-      root.innerHTML = '';
-      root.appendChild(this.body);
+      root!.innerHTML = '';
+      root?.appendChild(this.body);
     }else{
-      root.replaceWith(this.body);
+      root?.replaceWith(this.body);
     }
     this.didMount();
   }//end render

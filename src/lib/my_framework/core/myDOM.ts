@@ -75,18 +75,19 @@ export class MyDOM {
     const rootNode = key === 'root' ? dom.tree.root : MyDOM.getMemberNode(key)!;
     let isFirst = true;
     dom.exploreTree(rootNode!, (node)=>{
-      const previusBody = node.instance.body;
       if(isFirst){
+        const previusBody = node.instance.body;
         node.instance.create();
-        previusBody.replaceWith(node.instance.body);
+        // console.log(node.instance.body);
+        // const firstCheck = node.instance.myTree.update();
+
+        // !firstCheck && previusBody.replaceWith(node.instance.body);
         isFirst = false;
         return;
       }
-      const r = document.getElementById(`root-${node.key}`);
-      node.instance.render(r,false)
-
+      // const r = document.getElementById(`root-${node.key}`);
+      // node.instance.render(r,node.instance.body);
     })
-
   }
 
   /**

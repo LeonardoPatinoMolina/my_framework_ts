@@ -1,15 +1,14 @@
 export class MyTemplateEngine{
     
   /**
-   * este regex depura el template en busca de palabras reservadas de js
+   * Este regex depura el template en busca de palabras reservadas de js
    */
   private regexDepurator: RegExp = /\b(?:true|false|undefined)\b/gi;
-  /**
-   * este regex depura el template en busca de la directiva todelete en una etiqueta con renderizado condicional
-   */
-  private regexToMultiply: RegExp =  /<(\w+)[^>]*?\[tomultiply\][^>]*>(?:[\s\S]*?(<\/\1>)|$)/gm;
-  private regexToFor: RegExp =  /<(\w+)[^>]*?\[tofor\][^>]*>(?:[\s\S]*?(<\/\1>)|$)/gm;
 
+  /**
+   * Este regex aisla el contexto en el que se aplicará el regexDepurator
+   */
+  private regexDepuratorContext: RegExp = />([^<>]*)\b(true|false|undefined)\b([^<>]*)</gmi;
 
   myIf(predicate: boolean): string{
     return predicate ? '': ' if-to-delete '
@@ -17,23 +16,18 @@ export class MyTemplateEngine{
   myMul(amount: number): string{
     return ` mul-to-multiply="${amount}" `
   }
-  myFor(amount: number): string{
-    return 0 ? '': 'for-'
-  }
 
   /**
    * Método encargado de depurar el template de palabras reservadas
    */
   getTemplateDepurated(template: string): string{
-    return template.replace(new MyTemplateEngine().regexDepurator,'')
+    const temp = template.replace(new MyTemplateEngine().regexDepuratorContext,(match)=>{
+      return match.replace(new MyTemplateEngine().regexDepurator,'')
+    })
+    return temp
   }
 
-  getTemplateMultiply(template: string): string{
-    
-    return ''
-  }
-
-  gettemplateDepuratedStr(template: string): string{
+  getTemplateAfterDirective(template: string): string{
 
     const node = document.createElement('div')
     node.innerHTML = template;

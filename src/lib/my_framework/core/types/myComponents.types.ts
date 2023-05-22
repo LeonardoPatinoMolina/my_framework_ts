@@ -18,7 +18,11 @@ export interface BuildArgsI{
 
 export interface MyTreeI{
   name: string,
-  node: any,
-  attr: object,
-  children: MyTreeI[]
+  node: Element | Text
+  attr: NamedNodeMap,
+  children: Array<MyTreeI>,
+  forward?: Element | Text,
+  backyard?: Element | Text,
+  token?: string
 }
+

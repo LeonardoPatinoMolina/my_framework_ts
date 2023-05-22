@@ -1,11 +1,18 @@
 import { MyComponent } from "@my_framework/core/myComponent";
 import { MyNode } from "@my_framework/decorators/myNode";
+import { InputModelI } from "../../lib/my_framework/core/types/inputController.types";
 import { MyRouter } from "../../lib/my_framework/router/myRouter";
 
-@MyNode({selector: 'my-counter'})
+@MyNode({selector: 'my-counter',styles: '.hola{background-color: red} '})
 export class CounterComponent extends MyComponent {
   
-  numero: number = 0
+  numero: number = 0;
+
+  inputModel: InputModelI = {
+    model: {
+      name: 'joder'
+    }
+  };
   
   increment = () =>{
     this.refresh(()=>{
@@ -21,7 +28,7 @@ export class CounterComponent extends MyComponent {
   
   build(): string {
     return this.template((_)=> `
-      <main>
+      <main id="hola" class="${this.numero < -2 && 'hola'}">
         counter works! hola mundo
         <br>
         <div>${this.numero}</div>
@@ -30,12 +37,7 @@ export class CounterComponent extends MyComponent {
         <button ${_.on('click',()=>{MyRouter.go('/about')})}>
           navigate to about
         </button>
-        <div>
-          asmect
-          <span ${_.myMul(this.numero)} >lorem</span>
-        <div>
       </main>
     `);
   }
 }
-
