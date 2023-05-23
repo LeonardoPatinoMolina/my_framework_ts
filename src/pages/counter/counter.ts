@@ -1,19 +1,13 @@
 import { MyComponent } from "@my_framework/core/myComponent";
 import { MyNode } from "@my_framework/decorators/myNode";
 import { MyRouter } from "../../lib/my_framework/router/myRouter";
-import { HttpService } from "../../services/http";
 
 @MyNode({selector: 'my-counter'})
 export class CounterComponent extends MyComponent {
   
-  http: HttpService;
   modalIsOpen: boolean = false;
   count: number = 0;
   
-  constructor(svc: any){
-    super()
-    this.http = svc.http
-  }
 
   closeModal = ()=>{
     this.refresh(()=>{

@@ -1,4 +1,5 @@
 import { MyDOM } from "../core/myDOM.ts";
+import { MyCentralService } from "../service/myCentralService.ts";
 import { _404Module } from "../template/404/404.module.ts";
 import { RoutesI } from "./types/myRouter.types.ts";
 
@@ -38,17 +39,8 @@ export class MyRouter {
     //nos deshacemos de su declaración
     const newPages = new Map()
     args?.routes.forEach((route)=>{
-    // this.pages.forEach((value, k)=>{
-      //removemos los params de la ruta
-      // const newKey = route.path.slice(0, route.paths.indexOf(':') === -1 ? route.path.length : route.paths.indexOf(':') - 1);
       newPages.set(route.path, route.modulePage);
 
-      //almacenamos los params de la ruta
-      // const ss = route.paths.slice(route.paths.indexOf(':') === -1 ? 0 :route.paths.indexOf(':'));
-      //expreción regular para remover barras
-      // const rg = /[/]/g;
-      // const ns = ss.replace(rg,'').split(':');
-      // ns.shift();//removemos el espacio en blanco
       this.paramRoutes.set(route.path,route.params ?? []);
     })//end foreach
     this.pages = newPages;
@@ -71,6 +63,7 @@ export class MyRouter {
     const page = this.pages.get(path);
     
     MyDOM.clearDOM();
+    MyCentralService.clearServices();
     const newPage = page ?? this.notFound;
     MyDOM.renderTree(newPage);
   }
@@ -79,15 +72,6 @@ export class MyRouter {
    * Método encargado de navegar a otra página
    */
   static go(path: string, params: any[]): void{
-    //separamos los params de la ruta
-    //los params están encerrados en llaves {},
-    //las ubicamos y los aislamos
-    const inOf_ = path.indexOf('{');
-    //ruta limpiamasociada a la page
-    const cleanPath = path.slice(0, inOf_ === -1 ? path.length : inOf_ -1)
-    const paramsPath = path.slice(inOf_ !== -1 ? inOf_ : path.length, path.length).replace('/','');
-    // const params = paramsPath.split(/{|}/).filter(e=>e !== '');
-
     const router = new MyRouter();
     if(!router.pages.has(path)) return;
 

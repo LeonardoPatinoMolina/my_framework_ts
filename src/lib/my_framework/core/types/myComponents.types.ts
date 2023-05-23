@@ -7,7 +7,7 @@ export interface DirectiveTemplateI {
   myIf: (predicate: boolean)=>string,
   child: (key: string)=>(args?: ArgsAttachI)=>string
   children: (key: string)=> (dataBuilder: DataBuilderT)=>string,
-  myMul: any
+  myMul: (amount: number)=> string
 }
 //
 export interface BuildArgsI{

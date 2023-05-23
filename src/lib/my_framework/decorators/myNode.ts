@@ -51,7 +51,7 @@ export function MyNode(Fargs: FamilyArgsI) {
         const instancia: MyComponent = new proto(services);
         // Realizar acciones adicionales con la instancia
         instancia.props = props;
-        instancia.styles = Fargs?.styles
+        instancia.setStyle(Fargs?.styles);
         instancia.setKey(key);
         
         //firma para dom virtual
@@ -67,7 +67,6 @@ export function MyNode(Fargs: FamilyArgsI) {
         //variable auxiliar para verificar los  tipos del interceptor
         const potentialChildren = proto.module?.nodes as typeof MyComponent[];
         
-        // const directiveChildren: ChildrenAttachingI = Fargs?.children?.reduce((acc, cur, indx)=>{
         const directiveChildren: ChildrenAttachingI = potentialChildren?.reduce((acc, cur, indx)=>{
           if(cur.selector === this.selector) return acc;
           const parentKeyuninqe = key.split('__');
@@ -87,7 +86,7 @@ export function MyNode(Fargs: FamilyArgsI) {
            * Función wrapper encargada de envolver el proceso de attaching del componente, 
            * es decir, ejecuta lógica antes de acomplar el componente
            * al template, en esta capa se dota de su key única además de emparentarlo
-           * en el árbol, es a través de este que se injectan las props en le template
+           * en el árbol, es a través de este que se injectan las props en el template
            */
           const wrapperAttachOne = (childKey: string, propsC?: any,): string=>{
             const inst = cur.factory(key,childKey,propsC);//instanciamos el componente
@@ -97,6 +96,7 @@ export function MyNode(Fargs: FamilyArgsI) {
             
             return inst.attach(instancia);
           }
+
           const wrapperAttachmany = (builder: DataBuilderT): string => {
             const realiceAttach = builder.reduce((accData,curData)=>{
               accData += wrapperAttachOne(interceptorT(curData.key), curData.props);

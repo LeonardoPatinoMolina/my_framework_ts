@@ -1,4 +1,3 @@
-import { MyComponent } from "./myComponent.ts";
 import { MyNodeI } from "./types/myDOM.types.ts";
 
 export class MyDOM {
@@ -11,10 +10,6 @@ export class MyDOM {
    * Árbol principal donde se aloja la raiz el nodo raíz
    */
   tree!: {root: MyNodeI};
-  /**
-   * Almacén de las key de cada nodo existente en el árbol
-   */
-  nodesT: Set<string> = new Set();
   /**
    * Cuepo completo del árbol declarado de forma horizontal, es decir, las relaciones jerárquicas 
    * están relacionadas por key
@@ -32,62 +27,36 @@ export class MyDOM {
     this.root = root;
     MyDOM.MyDOMtInstancia = this;
   }
-  static createRoot(root: Element | HTMLElement | null): {render:(module: any)=>void}{
+  static createRoot(root: Element | HTMLElement | null): {render: typeof MyDOM.renderTree}{
     new MyDOM(root);
     return {
       render: MyDOM.renderTree
     }
   }//end createRoot
 
-
-  static configModules(modules: any[]){
-    modules.forEach(m=>{
-      new m().nodes.forEach((n: typeof MyComponent)=>{
-        n.module = m;
-      })
-    })
-  }
-
+  /**
+   * Método encargado del renderizado inicial del árbol de componentes
+   */
   static renderTree(myModule: any): void{
     const dom = new MyDOM()
     const firstKey = dom.firstKey
-    const rootNode = {
+    const rootNode: MyNodeI = {//creamos el nodo raíz
       children: new Set(),
       key: firstKey, 
-      instance: 0 as any,
+      instance: 0 as any,//añadimos un valor temporal mientras obtenemos la instancia
       parentKey: 'root'
-    } as MyNodeI
-    
+    }
+    //lo añadimos a las estructuras árbol de muyDOM
     dom.tree = {root: rootNode};
     dom.treeC.set(firstKey,rootNode);
+    //obtenemos la instancia deS
     const comp = new myModule().rootNode.factory('root',firstKey);
     
     comp.setKey(firstKey);
     dom.tree.root.instance = comp;
     dom.treeC.get(firstKey)!.instance = comp;
-    dom.nodesT.add(firstKey);
     
-    dom.renderTreeCC('root');
-  }
-
-  static updateTree(key: string,){
-    const dom = new MyDOM();
-    const rootNode = key === 'root' ? dom.tree.root : MyDOM.getMemberNode(key)!;
-    let isFirst = true;
-    dom.exploreTree(rootNode!, (node)=>{
-      if(isFirst){
-        const previusBody = node.instance.body;
-        node.instance.create();
-        // console.log(node.instance.body);
-        // const firstCheck = node.instance.myTree.update();
-
-        // !firstCheck && previusBody.replaceWith(node.instance.body);
-        isFirst = false;
-        return;
-      }
-      // const r = document.getElementById(`root-${node.key}`);
-      // node.instance.render(r,node.instance.body);
-    })
+    dom.renderEffect('root');
   }
 
   /**
@@ -126,56 +95,57 @@ export class MyDOM {
 
   /**
    * Método encargado de propagar una notificación en un arbol
-   * especificado de forma descendente partiendo de un nodo raíz
+   * especificado de forma descendente partiendo de un nodo raíz especificado
    * @param keyNode key del nodo raiz del arbol a notificar
    * @param notify función callback encargada de realizar la notificación
    */
   static notifyInTree(keyNode: string, notify: (component: MyNodeI)=>void){
     const dom = new MyDOM()
     const nodeTarget = MyDOM.getMemberNode(keyNode)!;
-    dom.exploreTree(nodeTarget,(node)=>{
-      notify(node);
-    })
+    dom.exploreTree(nodeTarget,notify)
   }
 
     /**
    * Método encargado de propagar una notificación en un arbol
-   * especificado de forma ascendente partiendo de los nodos exremos
-   * hasta el un nodo raíz
+   * especificado de forma ascendente partiendo de los nodos extremos
+   * hasta el un nodo raíz especificado
    * @param keyNode key del nodo raiz del arbol a notificar
    * @param notify función callback encargada de realizar la notificación
    */
   static notifyInTreeReverse(keyNode: string, notify: (component: MyNodeI)=>void){
     const dom = new MyDOM()
     const nodeTarget = MyDOM.getMemberNode(keyNode)!;
-    dom.exploreTreeReverse(nodeTarget,(node)=>{
-      notify(node);
-    })
+    dom.exploreTreeReverse(nodeTarget,notify)
   }
 
-
-  private renderTreeCC(key: string){
+  /**
+   * Método encargado de efectuar el renderizado en el dom y notificar el efecto en el árbol
+   */
+  private renderEffect(key: string){
     const dom = new MyDOM();
     const rootNode = key === 'root' ? dom.tree.root : MyDOM.getMemberNode(key);
 
     dom.exploreTree(rootNode!, (node)=>{
       if(node.key === dom.firstKey){
-        node.instance.render(dom.root!, true);
+        node.instance.render(dom.root!);
         return;
       }
-      const r = document.getElementById(`root-${node.key}`);
-      node.instance.render(r)
+      node.instance.render();
     });
   }
   
+  /**
+   * Método que añade un nuevo nodo al árbol
+   */
   static addMember(args: MyNodeI): void{
     if(MyDOM.isInTree(args.key)) return;
     const dom = new MyDOM()
-
-    dom.nodesT.add(args.key);
     dom.treeC.set(args.key, args);
   }
 
+  /**
+   * Método que obtiene el nodo con la key especificada
+   */
   static getMemberNode(key: string,): MyNodeI| undefined{
     const dom = new MyDOM();
     return dom.treeC.get(key);
@@ -190,10 +160,12 @@ export class MyDOM {
     MyDOM.getMemberNode(parentKey)?.children.delete(targetChildKey)
   }
 
+  /**
+   * Método encargado de eliminar un nodo del árbol
+   */
   static deleteNode(key: string){
     const dom = new MyDOM()
     dom.treeC.delete(key);
-    dom.nodesT.delete(key);
   }
 
   /**
@@ -205,6 +177,10 @@ export class MyDOM {
     return  dom.treeC.has(key);
   }
   
+  /**
+   * Método encargado de limpiar toda la estructura del árbol para
+   * dar espacio a nuevos miembros
+   */
   static clearDOM(): void{
     const dom = new MyDOM();
     if(dom.tree === undefined) return;
@@ -212,7 +188,6 @@ export class MyDOM {
     dom.exploreTreeReverse(dom.tree.root,(node)=>{
       node.instance.clear();
     })
-    dom.nodesT.clear();
     dom.treeC.clear();
   }
 }

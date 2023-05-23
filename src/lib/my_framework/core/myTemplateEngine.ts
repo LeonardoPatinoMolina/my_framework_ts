@@ -1,3 +1,8 @@
+import { EventController } from "./eventController";
+import { InputController } from "./inputController";
+import { MyComponent } from "./myComponent";
+import { DirectiveTemplateI } from "./types/myComponents.types";
+
 export class MyTemplateEngine{
     
   /**
@@ -5,11 +10,15 @@ export class MyTemplateEngine{
    */
   private regexDepurator: RegExp = /\b(?:true|false|undefined)\b/gi;
 
+  private owner: MyComponent;
   /**
    * Este regex aisla el contexto en el que se aplicará el regexDepurator
    */
   private regexDepuratorContext: RegExp = />([^<>]*)\b(true|false|undefined)\b([^<>]*)</gmi;
 
+  constructor(owner: MyComponent){
+    this.owner = owner;
+  } 
   myIf(predicate: boolean): string{
     return predicate ? '': ' if-to-delete '
   }
@@ -21,12 +30,15 @@ export class MyTemplateEngine{
    * Método encargado de depurar el template de palabras reservadas
    */
   getTemplateDepurated(template: string): string{
-    const temp = template.replace(new MyTemplateEngine().regexDepuratorContext,(match)=>{
-      return match.replace(new MyTemplateEngine().regexDepurator,'')
+    const temp = template.replace(this.regexDepuratorContext,(match)=>{
+      return match.replace(this.regexDepurator,'')
     })
     return temp
-  }
+  }//end getTemplateDepurated
 
+  /**
+   * Método encargado de aplicar todas las directivas sobre el template
+   */
   getTemplateAfterDirective(template: string): string{
 
     const node = document.createElement('div')
@@ -52,5 +64,43 @@ export class MyTemplateEngine{
       
     })
     return node.children[0].outerHTML;
+  }//end getTemplateAfterDirective
+
+  buildTemplate(builder: (
+      _: DirectiveTemplateI)=>string, 
+      eventController: EventController, 
+      inputController: InputController
+    ): string{
+
+    const getChild = (key: string) =>{
+      const m = this.owner.childAttaching.child[key]
+      if(m === undefined) throw new Error('El componente hijo con el selector '+key+' no existe en el presente módulo, intente añadirlo en el decorador MyModule que corresponda')
+      return m
+    }
+    const getChildren = (key: string) =>{
+      const m = this.owner.childAttaching.children[key]
+      if(m === undefined) throw new Error('Los componentes hijos con el selector '+key+' no existen en el presente módulo, intente añadirlos en el decorador MyModule que corresponda')
+      return m
+    }
+    const obj: DirectiveTemplateI = {
+     on: (name, callback, options)=>{
+       return eventController.onEvent(name, callback, options);
+      },
+      inputController: (modelName, fieldName, callback)=>{
+        return inputController.onInputController(modelName, fieldName, callback);
+      },
+      myIf: this.myIf,
+      child: getChild,
+      children: getChildren,
+      myMul: this.myMul
+    }
+
+    let templatetext = builder(obj);
+    templatetext = this.getTemplateDepurated(templatetext);
+    templatetext = this.getTemplateAfterDirective(templatetext);
+    
+    return templatetext;
   }
+
+
 }

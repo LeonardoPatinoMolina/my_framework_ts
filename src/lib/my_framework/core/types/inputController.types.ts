@@ -2,7 +2,7 @@ export interface InputControllerI {
   state: {
     value: string, 
     name: string, 
-    stateName: string, 
+    fieldName: string, 
     isFocus: boolean
   };
   targetKey: string;

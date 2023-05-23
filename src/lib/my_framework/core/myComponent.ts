@@ -1,4 +1,3 @@
-import { MyModuleT } from "../decorators/myModule.ts";
 import { ChildrenAttachingI } from "../decorators/types/myNode.types.ts";
 import { EventController } from "./eventController.ts";
 import { InputController } from "./inputController.ts";
@@ -12,12 +11,16 @@ import { DirectiveTemplateI } from "./types/myComponents.types.ts";
 
 export class MyComponent {
 
-  /** flag que determina si el componente se encuentra
-   * o no, previamnte inicializado
+  /** 
+   * Variable booleana que refleja el estado de inicialización
+   * del componente, esta toma el valor de true cuando el 
+   * componente ha sido inicializado
    */
   private initialized: boolean = false;
-  /** flag que determina si el componente se encuentra
-   * o no renderizado
+  /**
+   * Variable booleana que refleja el estado de renderización
+   * del componente, esta toma el valor de true cuando el 
+   * componente ha sido renderizado
    */
   private rendered: boolean = false;
 
@@ -25,53 +28,82 @@ export class MyComponent {
    * de los demás componentes
    */
   private _key!: string;
-
-  private _module!: MyModuleT;
+  /**
+   * Variable booleana que confirma si el componente se 
+   * encuentra en su primera montura, es decir, su primera renderización
+   */
   private firstMount: boolean = true;
-
+  /**
+   * Controlador de eventos del componente
+   */
   private eventController: EventController = new EventController(this);
-
+  /**
+   * Controlador de campos de texo de formularios del componente
+   */
   private inputController: InputController = new InputController(this);
 
-  private engineTemplate: MyTemplateEngine = new MyTemplateEngine();
-
+  /**
+   * Motor de plantillas del componente
+   */
+  private engineTemplate: MyTemplateEngine = new MyTemplateEngine(this);
+  /**
+   * Variable encardada de alamacenar los estilos del componente que serán asignados de forma dinámica
+   *  durante renderizado
+   */
+  private styles?: string;
+  /** 
+   * Nodo HTML al que corresponde el presente componente
+   */
+  private _body!: Element;
   /**
    * Propiedad destindad a almacenar el modelo de los inputs que se encuentren en 
    * existencia en el componente
    */
-  inputModel!: InputModelI;
+  inputModel?: InputModelI;
 
   /** Propiedades del componente dispuestas
-   * representan los datos que son inyectados desde el constructor
+   * representan los datos que son inyectados desde el componente padre
    */
   props?: any;
-
-  styles?: string;
 
   /** Atributo encargado de subscribir lógica al ciclo de
    * vida del componente
    */
   $: LifeComponent = new LifeComponent(this);
-
-  /** Nodo HTML al que corresponde el presente componente
-   * @type {Element}
-   */
-  body: any;
   
+  /**
+   * Componente padre
+   */
   parent?: MyComponent;
   
+  /**
+   * Este método indexa todos los hijos potenciales
+   * estos son todos los nodos que han sido declarados en el módulo al que pertenece el presente componente.
+   * La diferenciación ente child y children es debido a que cada uno reserva una capa interceptora en la cual se realiza
+   * un manejo distinto del emparentamiento y la injeción de props
+   */
   childAttaching: ChildrenAttachingI = {child: 0 as any, children: 0 as any};
-  static selector: string;
-  static module: any;
 
-  pendingAttach: Map<string, Map<string,any>> = new Map<string, Map<string,any>>();
+  /**
+   * Virtual dom local del componente
+   */
   myTree: MyTree = new MyTree(this);
 
+  /**
+   * Slelector de la clase de componente
+   */
+  static selector: string;
+  /**
+   * Modulo al que pertence la clase del componente
+   */
+  static module: any;
 
   constructor(svc?: any) {
     this.attach = this.attach.bind(this)
     this.template = this.template.bind(this)
     this.refresh = this.refresh.bind(this)
+    this.render = this.render.bind(this)
+    this.clear = this.clear.bind(this)
   }//end constructor
 
   //GETTERS------------------
@@ -87,12 +119,18 @@ export class MyComponent {
   get isFirstMount(){
     return this.firstMount;
   }
+  get body(){
+    return this._body.cloneNode(true) as Element;
+  }
   //SETTERS------------------
   setKey(key: string): void{
     this._key = key;
   }
-  setModule(module: MyModuleT): void{
-    this._module = module;
+  setStyle(style?: string): void{
+    this.styles = style;
+  }
+  setBody(body: Element): void{
+    this._body = body;
   }
   //STATIC METHODS-------------------
 
@@ -100,33 +138,12 @@ export class MyComponent {
     throw new Error('This method is only available from a class derived from the MyComponent class with the MyNode decorator.')
   };
 
-  //METHODS------------
+  //PRIVATE METHODS------------
   /**
-   * Método encardado de ejecutarse al instanciar el componente
-   * con la finalidad de inicializar props
+   * Método encargado de añadir los estilos por renderizado,
+   * estos son estilos que solo estaran disponibles en el BOM 
+   * mientras que el presnete componente esté renderizado
    */
-  init(){/*método que se espera sea sobre escrito */}
-
-  /**
-   * Método encargado de ejecutarse cuando el nodo HTML que 
-   * representa al componente se encuentre disponible
-   */
-  ready(): void{/*método que se espera sea sobre escrito */}
-
-  /**
-   * función encargada de ejecutar lógica previa a la 
-   * construcción de la plantilla
-   */
-  build(): string{
-    throw new Error('Método sin implementar por clase deribada: '+this.key);
-  }//end build
-
-  /**
-   * función encargada de ejecutar lógica previa al desrenderizado definitivo del
-   * componente, es decir durante la eliminación del mismo
-   */
-  destroy(): void{/*método que se espera sea sobre escrito */}//end destroy
-
   private addStyles(){
     if(!this.styles) return;
       const styleElement = document.createElement('style');
@@ -135,6 +152,10 @@ export class MyComponent {
       document.head.appendChild(styleElement);
   }// end addStyles
 
+    /**
+   * Método encargado de remover los estilos al des-renderizado
+   * al des-renderzar el componente,
+   */
   private removeStyles(){
     if(!this.styles) return;
     const target = document.getElementById(`${this.key}-style-head`);
@@ -157,7 +178,6 @@ export class MyComponent {
 
   /**
    * Método especializado se ejecuta al des-renderizar el componente
-   * 
   */
   private async didUnmount(){
     if(!this.initialized) return;
@@ -168,10 +188,10 @@ export class MyComponent {
   }//end didUnmount
 
   /**
-   * Método especializado se ejecuta cuando el componente se ha actualizado exitosamente
+  * Método especializado se ejecuta cuando el componente se ha actualizado exitosamente
   */
- private async didUpdate(){
-  if(this.firstMount) return;
+  private async didUpdate(){
+    if(this.firstMount) return;
     this.inputController.addInputController();
     this.eventController.addEvents();
     this.rendered = true;
@@ -179,103 +199,20 @@ export class MyComponent {
   }//end didUpdate
 
   /**
-   * Encargada de construir el componente generando el 
-   * nodo HTML
-   */
-  create() {
-    //convertimos el template a un nodo del DOM
-    const componentNode = this.string2html(this.build());
-    if(this.props === undefined) componentNode.setAttribute('data-rootcomponent-outcast','true')
-    componentNode.setAttribute('data-rootcomponent-key',this.key);
-    this.body = componentNode;
-  }//end create
-
-/**
- * Transforma un texto plano en nodos html
- */
-  private string2html = (str: string): Element => {
-  let parser = new DOMParser();
-  let doc = parser.parseFromString(str, "text/html");
-  const element = doc.body.children[0];
-  return element;
-}
-
-  /**
-   * Encargado de generar la plantilla del componente
-   */
-  template(builder: (_: DirectiveTemplateI)=>string): string{
-    const getChild = (key: string) =>{
-      const m = this.childAttaching.child[key]
-      if(m === undefined) throw new Error('El componente hijo con el selector '+key+' no existe en el presente módulo, intente añadirlo en el decorador MyModule que corresponda')
-      return m
-    }
-    const getChildren = (key: string) =>{
-      const m = this.childAttaching.children[key]
-      if(m === undefined) throw new Error('Los componentes hijos con el selector '+key+' no existen en el presente módulo, intente añadirlos en el decorador MyModule que corresponda')
-      return m
-    }
-    const obj: DirectiveTemplateI = {
-     on: (name, callback, options)=>{
-       return this.eventController.onEvent(name, callback, options);
-      },
-      inputController: (modelName, name, callback)=>{
-        return this.inputController.onInputController(modelName, name, callback);
-      },
-      myIf: this.engineTemplate.myIf,
-      child: getChild,
-      children: getChildren,
-      myMul: this.engineTemplate.myMul
-    }
-
-    let templatetext = builder(obj);
-    templatetext = this.engineTemplate.getTemplateDepurated(templatetext);
-    templatetext = this.engineTemplate.getTemplateAfterDirective(templatetext);
-    
-    return templatetext;
-  }//end template
-
-  /**
-   * Encargada de acoplar el componente hijo al padre y retornar una raíz para futuro renderizado
-   */
-  attach(parent: MyComponent): string{
-    this.parent = parent;
-    return this.body.outerHTML;
-  }//end attach
-
-  /**
-   * Método encargado de actualizar un componente que lo requiera,
-   * es decir, un componente mutable
+  * Transforma un texto plano en nodos html
   */
- refresh(callback?: ()=>void, forceChange: boolean = false) {
-   if(callback) callback();
-   
-    MyDOM.notifyInTree(this.key,(node)=>{
-      node.instance.didUnmount();
-    });
-
-    this.create()
-    const targetRoot = document.querySelector(`[data-rootcomponent-key="${this.key}"]`)
-    if(!targetRoot) throw new Error('no se encontro el nodo del componente')
-    this.myTree.update(targetRoot)
-    
-    
-    //establecemos el estado actual como previo en 
-    //espera de una proxima comparación
-    MyDOM.notifyInTree(this.key,(node)=>{
-      // en caso de desrenderizado, ignotat notificaciones
-      if(node.instance.checkUnRender()) return;
-      // en caso de ser la primera montura, notificar didMount();
-      if(node.instance.isFirstMount) node.instance.didMount();
-      // en caso contrario notificar actualización didUpdate();
-      else node.instance.didUpdate();
-    });
-  }//end update
+  private string2html = (str: string): Element => {
+    let parser = new DOMParser();
+    let doc = parser.parseFromString(str, "text/html");
+    const element = doc.body.children[0];
+    return element;
+  }// strin2html
 
   /**
    * Método encargado de verificar si un componente ha sido desrenderizado y lo elimina del árbol 
    * en consecuencia
    */
-  checkUnRender(): boolean{
+  private checkUnRender(): boolean{
     const root = document.querySelector(`[data-rootcomponent-key="${this.key}"]`)
     if(root === null) {
       /**
@@ -291,18 +228,104 @@ export class MyComponent {
       return true;
     };
     return false
-  }
+  }//end checkUnrender
+
+  //PUBLIC METHODS-------------------------------
+
+ /**
+  * Método encardado de ejecutarse al instanciar el componente
+  * con la finalidad de inicializar props
+  */
+  init(){/*método que se espera sea sobre escrito */}
+
+ /**
+  * Método encargado de ejecutarse cuando el nodo HTML que 
+  * representa al componente se encuentre disponible
+  */
+  ready(): void{/*método que se espera sea sobre escrito */}
+  
+  /**
+   * función encargada de ejecutar lógica previa a la 
+   * construcción de la plantilla
+   */
+  build(): string{
+    throw new Error('Método sin implementar por clasederibada: '+this.key);
+  }//end build
+
+  /**
+   * función encargada de ejecutar lógica previa aldesrenderizado definitivo del
+   * componente, es decir durante la eliminación del mismo
+   */
+  destroy(): void{/*método que se espera sea sobre escrito*/}
+  //end destroy
+
+  /**
+   * Encargada de construir el componente generando el 
+   * nodo HTML
+   */
+  create() {
+    //convertimos el template a un nodo del DOM
+    const componentNode = this.string2html(this.build());
+    if(this.props === undefined) componentNode.setAttribute('data-rootcomponent-outcast','true')
+    componentNode.setAttribute('data-rootcomponent-key',this.key);
+    this.setBody(componentNode)
+  }//end create
+
+  /**
+   * Encargado de generar la plantilla del componente
+   */
+  template(builder: (_: DirectiveTemplateI)=>string): string{
+    return this.engineTemplate.buildTemplate(builder, this.eventController,this.inputController)
+  }//end template
+
+  /**
+   * Encargada de acoplar el componente hijo al padre y retornar la 
+   * sintaxis html del componente actual
+   */
+  attach(parent: MyComponent): string{
+    this.parent = parent;
+    return this.body.outerHTML;
+  }//end attach
+
+  /**
+   * Método encargado de actualizar un componente que lo requiera,
+   * es decir, un componente mutable
+  */
+ refresh(callback?: ()=>void) {
+   if(!!callback) callback();
+   
+    MyDOM.notifyInTree(this.key,(node)=>{
+      node.instance.didUnmount();
+    });
+
+    this.create()
+    const targetRoot = document.querySelector(`[data-rootcomponent-key="${this.key}"]`)
+    if(!targetRoot) throw new Error('no se encontro el nodo del componente')
+    this.myTree.update(targetRoot)
+    
+    
+    //establecemos el estado actual como previo en 
+    //espera de una proxima comparación
+    MyDOM.notifyInTree(this.key,(node)=>{
+      // en caso de desrenderizado, ignotar notificaciones
+      if(node.instance.checkUnRender()) return;
+      // en caso de ser la primera montura, notificar didMount();
+      if(node.instance.isFirstMount) node.instance.didMount();
+      // en caso contrario notificar actualización didUpdate();
+      else node.instance.didUpdate();
+    });
+  }//end update
+
+
   
   /** 
    * Encargada de renderizar el componente en
    * la raiz que se estipule
    */
-  render(root: HTMLElement | Element | null , principal = false){
-    if(principal){
+  render(root?: HTMLElement | Element | null){
+    if(root){
       root!.innerHTML = '';
       root?.appendChild(this.body);
-    }else{
-      root?.replaceWith(this.body);
     }
     this.didMount();
   }//end render
