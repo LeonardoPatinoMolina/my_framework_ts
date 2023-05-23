@@ -1,8 +1,8 @@
 import { MyInjectable } from "@my_framework/decorators/myInjectable";
 
-@MyInjectable({serviceName: 'http'})
+@MyInjectable({serviceName: 'http', provideIn: ['counter_module']})
 export class HttpService {
-  url = "https://jsonplaceholder.typicode.com/users";
+  private url = "https://jsonplaceholder.typicode.com/users";
 
   async get(): Promise<any>{
     const res = await fetch(this.url)

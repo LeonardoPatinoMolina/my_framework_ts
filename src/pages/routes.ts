@@ -1,8 +1,8 @@
 import { RoutesI } from "../lib/my_framework/router/types/myRouter.types"
-import { AboutModule } from "./about/about.module"
 import { CounterModule } from "./counter/counter.module"
+import { ResultModule } from "./result/result.module"
 
 export const ROUTES: RoutesI[] = [
-  {paths: "/", modulePage: CounterModule},
-  {paths: "/about", modulePage: AboutModule, params: ['id']}
+  {path: "/", modulePage: CounterModule},
+  {path: "/result", modulePage: ResultModule, params: ['result']},
 ]

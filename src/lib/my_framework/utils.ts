@@ -1,4 +1,3 @@
-import { v4 as uuid } from 'uuid';
 
 //utilidades destinadas a proyectos venideros com my framework
 type OptionsCacheInterceptor = {cacheName: string, revalidate: number}
@@ -211,12 +210,3 @@ export class FetchingPI {
     this.abortController.abort();
   }
 } //end class
-
-
-/**
- * Función generadora de id único
- * @returns id único
- */
-export function generateGuid(): string{
-  return uuid();
-}

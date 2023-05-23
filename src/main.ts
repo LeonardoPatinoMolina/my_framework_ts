@@ -5,8 +5,7 @@ import { ROUTES } from "./pages/routes";
 
 MyDOM.setGlobalStore(store);
 
-const root = MyDOM.createRoot(document.getElementById('root'));
-// root.render(CounterModule);
+MyDOM.createRoot(document.getElementById('root'));
 
 new MyRouter({
   routes: ROUTES

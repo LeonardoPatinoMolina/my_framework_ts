@@ -79,6 +79,7 @@ export class MyTree {
    
     this.mismatches(currentTree, oldtree)
     if(oldtree.children.length !== currentTree.children.length) return;
+    
     for (let i = 0; i < currentTree.children.length; i++) {
       const element1 = currentTree.children[i];
       const element2 = oldtree.children[i];
@@ -92,7 +93,7 @@ export class MyTree {
   }//end reconisliation
 
   private mismatches(currentTree: MyTreeI, oldtree: MyTreeI): void{
-    if(currentTree.name === 'TEXT'){
+    if(currentTree.name === 'TEXT'){ //en caso de ser un nodo de texto directamente alteramos su contenido
       if(currentTree.node.textContent !== oldtree.node.textContent ){
         // oldtree.node.replaceWith(currentTree.node);
         oldtree.node.textContent = currentTree.node.textContent
@@ -101,37 +102,20 @@ export class MyTree {
       }
       return;
     }
+
+    //en caso de tener distinto nombre, es decir, quye la descrepancia sea del tagname,
+    //remplazar directamente el nodo
+    if(currentTree.name !== oldtree.name){
+      oldtree.node.replaceWith(currentTree.node);
+      oldtree.node = currentTree.node;
+      oldtree.name = currentTree.name;
+      oldtree.attr = currentTree.attr;
+      oldtree.children = currentTree.children;
+      this.isReconciled = true;
+      return;
+    }
     
     if(oldtree.children.length !== currentTree.children.length) {
-      // if(oldtree.children.length > currentTree.children.length){
-      //   //hay ausencia de hijos
-      //   const epa: any[] = []
-      //   oldtree.children.forEach((value,key)=>{
-      //     const ep = currentTree.children.get(key)
-      //     if(!ep) epa.push(value)
-      //   })
-        
-      //   epa.forEach((el: MyTreeI)=>{
-      //     el.node.remove();
-      //   })
-      // }else{
-      //   //hay presencia de hijos
-      //   const epa: any[] = []
-      //   currentTree.children.forEach((value,key)=>{
-      //     const ep = oldtree.children.get(key)
-      //     if(!ep) epa.push(value)
-      //   })
-      //   epa.forEach((el: MyTreeI)=>{
-      //     if(el.forward){
-      //         if(!(el.forward instanceof Text)){
-      //           el.forward.insertAdjacentElement('beforebegin',el.node as Element);
-      //         }else{
-      //           el.node.remove()
-      //           el.forward.parentNode?.insertBefore(el.node, el.forward)
-      //         }
-      //       }
-      //   })
-      // }
       oldtree.node.replaceWith(currentTree.node);
       oldtree.node = currentTree.node;
       oldtree.children = currentTree.children;
@@ -162,11 +146,10 @@ export class MyTree {
         if(!(oldT.node instanceof Text)) oldT.node.setAttribute(value.name,value.value);
       });
     }else{
-      currentEntries.forEach(([key,value]: any)=>{
-        if(oldT.attr[key].value !== currentT.attr[key].value){
+      currentEntries.forEach(([key, value]: any)=>{
+        if(oldT.attr[value.name]?.value !== currentT.attr[value.name]?.value){
           this.isReconciled = true;
-          
-          if(!(oldT.node instanceof Text)) oldT.node.setAttribute(key.name,value.value);
+          if(!(oldT.node instanceof Text)) oldT.node.setAttribute(value.name,value.value);
         }
       });
     }//end else

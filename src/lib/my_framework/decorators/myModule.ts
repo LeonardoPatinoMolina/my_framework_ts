@@ -1,7 +1,7 @@
 import { MyComponent } from "../core/myComponent";
-import { generateGuid } from "../utils";
 
 export type MyModuleT = {
+  key: string;
   rootNode: typeof MyComponent,
   nodes: typeof MyComponent[],
   services?: any[],
@@ -13,7 +13,7 @@ export type MyModuleT = {
  * cada declaradión de componentes y también proveer servicios de interes,
  * incluso a traves del mismo se puede asociar otros módulos
  */
-export function MyModule({rootNode,nodes = [], services = [], modules}:MyModuleT){
+export function MyModule({key, rootNode, nodes = [], services = [], modules}:MyModuleT){
   return function <T extends { new(...args: any[]): {} }>(constructor: T){
     /**
      * Espacio de mempria dedicado a la instancia de la clase decoradora, esto se debe a que el decorador "MyModule"
@@ -25,7 +25,7 @@ export function MyModule({rootNode,nodes = [], services = [], modules}:MyModuleT
       rootNode!: typeof MyComponent;
       services?: any[] = [];
       modules?: any[];
-      key: string = generateGuid()
+      key!: string;
       
       constructor(...args: any){
         super(...args)
@@ -33,19 +33,17 @@ export function MyModule({rootNode,nodes = [], services = [], modules}:MyModuleT
           //lógica asociada al patrón singleton
           return instance
         }
+        this.key = key
         this.rootNode = rootNode;
         this.modules = modules;
         rootNode.module = this;
-        const newNS = modules?.reduce((acc,cur)=>{
-          return {nodes: [...acc.nodes, ...cur.nodes], services: [acc.services, ...cur.services]}
-        },{nodes: [], services: []} as any) ?? {nodes: [], services: []}
-        
-        this.nodes = [...newNS.nodes, ...nodes];
-        this.services = [...newNS.services, ...services]
+        this.nodes = nodes;
+        this.services = services;
 
-        nodes.forEach((n)=>{
-          n.module = this
-        });
+        nodes.forEach((n)=>{n.module = this});
+        modules?.forEach((m)=>{
+          this.nodes.push(new m().rootNode)
+        })
         
         instance = this; //lógica asociada al patrón singleton
       }//end constructor

@@ -1,6 +1,6 @@
 
 export interface RoutesI {
-  paths: string;
+  path: string;
   modulePage: any;
   params?: string[]
 }

@@ -1,12 +1,12 @@
-import { ColoresComponent } from "../../components/colores";
-import { PruevaComponent } from "../../components/prueva";
+import { ModalComponent } from "../../components/modal";
 import { MyModule } from "../../lib/my_framework/decorators/myModule";
 import { HttpService } from "../../services/http";
-import { CounterComponent } from "./counter.component";
+import { CounterComponent } from "./counter";
 
 @MyModule({
-  nodes: [PruevaComponent, ColoresComponent],
+  key: 'counter_module',
+  nodes: [ModalComponent],
   rootNode: CounterComponent,
-  services: [HttpService]
+  services: [HttpService],
 })
 export class CounterModule {}

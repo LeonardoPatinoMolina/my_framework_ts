@@ -30,4 +30,9 @@ export class MyCentralService {
     const svc = new MyCentralService();
     return svc.services.get(svcName);
   }
+  
+  static clearServices(): void{
+    const svc = new MyCentralService();
+    svc.services.clear();
+  }
 }

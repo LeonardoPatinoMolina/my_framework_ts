@@ -39,13 +39,17 @@ export function MyNode(Fargs: FamilyArgsI) {
          * hace referencia a la clase del componente que extiende de la clase MyComponent
          */
         const proto = this as any
-        
-        // Realizar acciones adicionales con la instancia
-         let services: object = proto.module.services?.reduce((acc: object, curService: any)=>{
+        //obtenemos los servicios que están destinados a se proveidos en el módulo del componente
+        let services: object = proto.module.services?.reduce((acc: object, curService: any)=>{
+          if(curService.provideIn !== 'all'){
+            const check = curService.provideIn.some((p: string)=>p === proto.module.key);
+            if(!check) return acc;
+          }
           return {...acc, [curService.serviceName]: new curService()}
         },{});
         
         const instancia: MyComponent = new proto(services);
+        // Realizar acciones adicionales con la instancia
         instancia.props = props;
         instancia.styles = Fargs?.styles
         instancia.setKey(key);
@@ -126,5 +130,4 @@ export function MyNode(Fargs: FamilyArgsI) {
       }
     };//end class extends
   };//end return
-
 }

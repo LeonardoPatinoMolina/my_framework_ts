@@ -185,7 +185,7 @@ export class MyComponent {
   create() {
     //convertimos el template a un nodo del DOM
     const componentNode = this.string2html(this.build());
-    if(this.props !== undefined) componentNode.setAttribute('data-rootcomponent-outcast','true')
+    if(this.props === undefined) componentNode.setAttribute('data-rootcomponent-outcast','true')
     componentNode.setAttribute('data-rootcomponent-key',this.key);
     this.body = componentNode;
   }//end create
@@ -204,7 +204,16 @@ export class MyComponent {
    * Encargado de generar la plantilla del componente
    */
   template(builder: (_: DirectiveTemplateI)=>string): string{
-
+    const getChild = (key: string) =>{
+      const m = this.childAttaching.child[key]
+      if(m === undefined) throw new Error('El componente hijo con el selector '+key+' no existe en el presente módulo, intente añadirlo en el decorador MyModule que corresponda')
+      return m
+    }
+    const getChildren = (key: string) =>{
+      const m = this.childAttaching.children[key]
+      if(m === undefined) throw new Error('Los componentes hijos con el selector '+key+' no existen en el presente módulo, intente añadirlos en el decorador MyModule que corresponda')
+      return m
+    }
     const obj: DirectiveTemplateI = {
      on: (name, callback, options)=>{
        return this.eventController.onEvent(name, callback, options);
@@ -213,8 +222,8 @@ export class MyComponent {
         return this.inputController.onInputController(modelName, name, callback);
       },
       myIf: this.engineTemplate.myIf,
-      child: this.childAttaching.child,
-      children: this.childAttaching.children,
+      child: getChild,
+      children: getChildren,
       myMul: this.engineTemplate.myMul
     }
 
@@ -231,7 +240,6 @@ export class MyComponent {
   attach(parent: MyComponent): string{
     this.parent = parent;
     return this.body.outerHTML;
-    // return `<div id="root-${this.key}"></div>`;
   }//end attach
 
   /**
@@ -275,7 +283,6 @@ export class MyComponent {
        * ha sido desrenderizado por ende podemos removerlo del 
        * arbol
        */
-      console.log(this.key);
       MyDOM.notifyInTreeReverse(this.key,(node)=>{
         node.instance.clear();
         node.instance.parent && MyDOM.deleteChildNode(node.instance.parent.key, node.instance.key)

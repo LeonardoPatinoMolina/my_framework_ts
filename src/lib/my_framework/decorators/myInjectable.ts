@@ -1,7 +1,8 @@
-import { MyCentralService } from "@my_framework/service/myCentralService"
+import { MyCentralService } from "@my_framework/service/myCentralService";
 
 interface InjectableArgs{
-  serviceName: string
+  serviceName: string;
+  provideIn: string[] | 'all';
 }
 
 
@@ -15,7 +16,7 @@ export function MyInjectable(iArgs: InjectableArgs){
         }
         MyCentralService.setService(iArgs.serviceName, this);
       }
-
+      static provideIn: string[] | 'all' = iArgs.provideIn;
       static serviceName: string = iArgs.serviceName;
     }
   }

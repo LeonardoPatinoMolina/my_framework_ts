@@ -4,10 +4,15 @@ import { ObserverI } from "./types/myGlobalStore.types";
 
 export class MyGlobalStore {
   static globalStoreInstance: MyGlobalStore;
-
+  /**
+   * Almacén principal del store global encargado de guardar cada shelf
+   * declarado
+   */
   store: Map<string, MyShelf<any>> = new Map();
+  /**
+   * Componentes observadores susbcritos a un shelf particular
+   */
   observers: Map<string, Set<ObserverI>> = new Map();
-  observersN: Map<string, Set<string>> = new Map();
 
   constructor() {
     if (!!MyGlobalStore.globalStoreInstance) {
@@ -36,14 +41,17 @@ export class MyGlobalStore {
     const obs = gStore.observers.get(shelfName);
     if (obs) {
       const sh = gStore.getShelf(shelfName);
-      gStore.observers.get(shelfName)?.forEach((o) => {
-        //forzamos un actualización de los observers
+      obs.forEach((o) => {
+        //notificamos el cambio a los observers
         o.storeNotify({data: cloneDeep(sh?.data), shelf: shelfName});
       });
     }
   } //end dispatch
 
-
+  /**
+   * Método encargado de obtener un shelf en base a su respectivo nombre
+   * @returns 
+   */
   private getShelf(shlefName: string): MyShelf<any> | undefined{
     const shelf = this.store.get(shlefName);
     return shelf;
@@ -91,5 +99,3 @@ export class MyGlobalStore {
     return obs.delete(observer);
   } //end subscribe
 } //end calss
-
-

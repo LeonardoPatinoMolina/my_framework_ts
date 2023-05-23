@@ -4,7 +4,14 @@ import { ActionT, ReducerI, ShelfConfigI, ShelfReturnI } from "./types/myShelf.t
 export class MyShelf<T> {
   private keyStore: string;
 
+  /**
+   * Datos puntuales del shelf
+   */
   private _data: T;
+  /**
+   * Funciones disparadoras declarados en el reducer del 
+   * shelf
+   */
   private _actions: { [key: string]: ActionT<T> };
 
   constructor({
@@ -41,11 +48,9 @@ export class MyShelf<T> {
   }
 }
 
-
-
 /**
  * Función factory encargada de crear un nuevo shelf para su posterior 
- * use en el store
+ * uso en el store
  */
 export const createShelf = <T = any>(args: ShelfConfigI<T>): ShelfReturnI<T> => {
   const newShelf = new MyShelf<T>(args);
