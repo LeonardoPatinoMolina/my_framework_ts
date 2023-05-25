@@ -2,17 +2,21 @@ import { MyComponent } from "@my_framework/core/myComponent";
 import { MyNode } from "@my_framework/decorators/myNode";
 import { MyRouter } from "../../lib/my_framework/router/myRouter";
 
-@MyNode({selector: 'my-counter'})
+@MyNode({selector: 'my-counter',styles: (`
+  .holis{
+    color: green;
+    font-weight: bold;
+  }
+`)})
 export class CounterComponent extends MyComponent {
   
   modalIsOpen: boolean = false;
   count: number = 0;
   
-
   closeModal = ()=>{
     this.refresh(()=>{
       this.modalIsOpen = false;
-    });
+    }); 
   };
   
   openModal = ()=>{
@@ -24,6 +28,11 @@ export class CounterComponent extends MyComponent {
   addCount = ()=>{
     this.refresh(()=>{
       this.count++;
+    })
+  }
+  decrementCount = ()=>{
+    this.refresh(()=>{
+      this.count--;
     })
   }
 
@@ -43,18 +52,36 @@ export class CounterComponent extends MyComponent {
         alt="my framework logo" 
         title="my framework logo"
       >
-    </p>
-    <p class="number">${this.count} <span>+ 10</span></p>
+      </p>
+      <p class="number">${this.count} <span>+ 10</span></p>
       <button
         class="btn_neumorfus" 
         style="margin-bottom: 1rem;" 
         ${_.on('click', this.addCount)}
       >Añadir</button>
+
+      <button
+        class="btn_neumorfus" 
+        style="margin-bottom: 1rem;" 
+        ${_.on('click', this.decrementCount)}
+      >Remover</button>
       <button 
         class="btn_neumorfus" 
         ${_.on('click', ()=>{MyRouter.go(`/result`,[this.count + 10])})}
       >Ver resultado</button>
+
     </main>
     `);
   }
 }
+
+
+
+
+
+
+
+
+
+
+

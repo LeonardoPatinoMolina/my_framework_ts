@@ -14,7 +14,6 @@ export interface ChildI {
 export interface FamilyArgsI{
   selector: string;
   styles?: string,
-  services?: Array<{ new(...args: any[]): {} }>
 }
 
 export interface ChildrenAttachingI{

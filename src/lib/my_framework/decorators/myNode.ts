@@ -51,7 +51,7 @@ export function MyNode(Fargs: FamilyArgsI) {
         const instancia: MyComponent = new proto(services);
         // Realizar acciones adicionales con la instancia
         instancia.props = props;
-        instancia.setStyle(Fargs?.styles);
+        instancia.setStyle(Fargs.styles);
         instancia.setKey(key);
         
         //firma para dom virtual

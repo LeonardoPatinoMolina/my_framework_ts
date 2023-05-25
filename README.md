@@ -567,6 +567,15 @@ Es importante recalcar que esta implementación no consiste en formularios react
 
 <hr>
 
+## __Reactividad__
+La reactividad en my framework ts opera bajo un ``algoritmo de reconciliación``, para ello emplea un __virtual DOM__ este consiste en un __árbol n-ario__ que funge como una representación abstracta del árbol de nodos HTML del componente, en cada refresco de la vista el algoritmo realiza una comparación entre el árbol de nodos del componente y el DOM en busca de discrepancias (_mismatches_), en caso de hallarlas, ejecuta operaciones especializadas para reconciliar ámbas esctructuras primando la del árbol virtual sobre el  DOM.
+
+### __Criterios de discreopncias (mismatches criteria)__
+Los criterios a los que se rige la reconciliación están clasificados en 3:
+
+- __Cualitativos__: Son todas aquellas discrepancias donde un nodo presenta una diferencia en sus atributos o aspecto general, un ejemplo puede ser que un nodo posea un atributos con un valores distintos o, la ausencia o presencia de algunos atributos. Otro aspecto comparado es el tipo de nodo, un ejemplo sería que uno de ellos fuese un "div" y el otro un "span". 
+- __Cuantitativos__: 
+- __Estructurales__: 
 
 
 

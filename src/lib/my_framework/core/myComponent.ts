@@ -104,6 +104,7 @@ export class MyComponent {
     this.refresh = this.refresh.bind(this)
     this.render = this.render.bind(this)
     this.clear = this.clear.bind(this)
+    this.addStyles = this.addStyles.bind(this)
   }//end constructor
 
   //GETTERS------------------

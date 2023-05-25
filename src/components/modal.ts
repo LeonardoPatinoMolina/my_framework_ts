@@ -16,7 +16,7 @@ export class ModalComponent extends MyComponent{
           <img
             id="html_logo"
             class="about__list__item__logo"
-            src="src/assets/html.svg"
+            src="assets/html.svg"
             alt="html logo"
             />
           </li>
@@ -25,7 +25,7 @@ export class ModalComponent extends MyComponent{
             <img
             id="css_logo"
             class="about__list__item__logo"
-            src="src/assets/css.svg"
+            src="assets/css.svg"
             alt="css logo"
           />
         </li>
@@ -34,7 +34,7 @@ export class ModalComponent extends MyComponent{
           <img
             id="ts_logo"
             class="about__list__item__logo"
-            src="src/assets/typescript.svg"
+            src="assets/typescript.svg"
             alt="javascript logo"
           />
         </li>

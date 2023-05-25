@@ -1,7 +1,7 @@
 export interface InputControllerI {
   state: {
     value: string, 
-    name: string, 
+    modelName: string, 
     fieldName: string, 
     isFocus: boolean
   };

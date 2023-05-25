@@ -10,4 +10,3 @@ MyDOM.createRoot(document.getElementById('root'));
 new MyRouter({
   routes: ROUTES
 })
-

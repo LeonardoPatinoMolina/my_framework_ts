@@ -25,19 +25,23 @@ export class InputController {
   /** Se eccarga de administrar los selectores necesarios para
    * añadir los escucha de eventos en linea
    */
-  onInputController(stateName: string, name: string, callback?: (value: string)=>string): string {
+  onInputController(modelName: string, fieldName: string, callback?: (value: string)=>string): string {
     const keycontroller = `${this.owner.key}-controller-${this.counterKeyController}`;
 
     if(!this.owner.isInitialized){
-
-      const curValue = this.owner.inputModel[stateName] ? this.owner.inputModel[stateName][name] : undefined;
+      let value: string = '';
+      if(this.owner?.inputModel){
+        if(this.owner.inputModel[modelName]){
+          value = this.owner?.inputModel[modelName][fieldName]
+        }
+      }
 
       this.inputcontrollers.set(keycontroller, {
         callback,
         state: {
-          name,
-          stateName,
-          value: curValue ?? '',
+          fieldName,
+          modelName,
+          value,
           isFocus: false
         },
         targetKey: keycontroller
@@ -75,11 +79,12 @@ export class InputController {
         };
         
         target.value = curValue;
+        if(!this.owner?.inputModel) throw new Error('No ha declarado aún un input model para el controlador con el modelo '+controller.state.modelName)
         this.owner.inputModel = {
           ...this.owner.inputModel,
-          [controller.state.stateName]: {
-            ...this.owner.inputModel[controller.state.stateName],
-            [controller.state.name]: curValue
+          [controller.state.modelName]: {
+            ...this.owner!.inputModel[controller.state.modelName],
+            [controller.state.fieldName]: curValue
           }
         };
       },{signal: abortC.signal});// end keyup eventlistener

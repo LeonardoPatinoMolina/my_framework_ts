@@ -21,8 +21,4 @@ export interface MyTreeI{
   node: Element | Text
   attr: NamedNodeMap,
   children: Array<MyTreeI>,
-  forward?: Element | Text,
-  backyard?: Element | Text,
-  token?: string
 }
-
