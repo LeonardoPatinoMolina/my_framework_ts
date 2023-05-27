@@ -34,8 +34,6 @@ export class CounterComponent extends MyComponent {
     this.refresh(()=>{
       this.count--;
     })
-
-    
   }
 
   build(): string {

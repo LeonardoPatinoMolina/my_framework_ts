@@ -1,7 +1,7 @@
 import { MyDOM } from "../core/myDOM.ts";
 import { MyCentralService } from "../service/myCentralService.ts";
 import { _404Module } from "../template/404/404.module.ts";
-import { MatchRouteI, RoutesI } from "./types/myRouter.types.ts";
+import { InterceptorReturn, MatchRouteI, RoutesI } from "./types/myRouter.types.ts";
 
 export class MyRouter {
   static instanceRouter: MyRouter;
@@ -13,17 +13,24 @@ export class MyRouter {
   private notFound?: any;
 
   /**
+   * Ruta actualmente en función
+   */
+  private currentRoute?: RoutesI;
+  private currentRouteS!: string;
+
+  /**
    * Página que se encuentra actualmente renderizada, corresponde al
    * module actual
    */
-  currentPage!: any;
+  currentPage: any;
+
 
   /**
    * Params tipo slug de la página que se encuentra renderizada
    * corresponde a un objeto con el nombre del param declarado en la ruta
    * como key y el valor que le acompaña en la url
    */
-  currentParamsSlug!: any;
+  currentParamsSlug: any;
 
   /**
    * Datos discretos de la página que se encuentra renderizada
@@ -56,7 +63,8 @@ export class MyRouter {
   }
 
   /**
-   * Método encargado de hallar 
+   * Método encargado de hallar la ruta coincidente y sus respectivos
+   * slugPrams si los hay
    */
   matchRoute(url: string): MatchRouteI | null {
     const routes = this.routes;
@@ -68,20 +76,20 @@ export class MyRouter {
       if(urlSegments[0] === ''){
         for (const r of routes) {
           if(r.path === '/'){
-            return {modulePage: r.modulePage, params: {}}
+            return {route: r, paramsSlug: {}}
           }
         }
       }
       //si hay una correspondencia en el tamaño de los segmentos podemos verificar 
       //si existen parametros slug  o si no existe ninguna correspondencia con las rutas definidas
       if (routeSegments.length === urlSegments.length) {
-        const params: any = {};
+        const paramsSlug: any = {};
   
         let isMatch = true;
         for (let i = 0; i < routeSegments.length; i++) {
           if (routeSegments[i].startsWith(':')) {
             const paramName = routeSegments[i].slice(1);
-            params[paramName] = urlSegments[i];
+            paramsSlug[paramName] = urlSegments[i];
           } else if (routeSegments[i] !== urlSegments[i]) {
             isMatch = false;
             break;// salimos del bucle si se haya una discrepancia
@@ -89,7 +97,7 @@ export class MyRouter {
         }
   
         if (isMatch) {
-          return { modulePage: route.modulePage, params };
+          return { route, paramsSlug };
         }
       }
     }
@@ -106,22 +114,69 @@ export class MyRouter {
     //almacenamos un posible dato discreto
     const hState = history.state;
     this.currentDiscreet = hState?.discreet;
+    
+    if(!!this.currentRoute){
+      const interOutResponse = this.interOut()
+      if(interOutResponse) {
+        if(interOutResponse.cancel) {
+          MyRouter.back();
+          return;
+        }//end if
+        if(interOutResponse.redirect){
+          this.currentRoute = undefined;
+          MyRouter.go(interOutResponse.redirect);
+          return;
+        }//end if
+      }//end if
+    }//end if
 
-    const mathed = this.matchRoute(path)
+    const mathed = this.matchRoute(path);
     
     let page
     if(mathed === null) {
       page =  this.notFound;
-      this.currentParamsSlug = {}
+      this.currentParamsSlug = undefined
     }else {
-      page = mathed.modulePage
-      this.currentParamsSlug = mathed.params
+      this.currentRoute = mathed.route;
+      const interInResponse = this.interIn(path, {params: {slugs: mathed.paramsSlug, querys: MyRouter.queryParams()}})
+      if(interInResponse) {
+        if(interInResponse.cancel) {
+          MyRouter.back();
+          return;
+        };
+        if(interInResponse.redirect){
+          this.currentRoute = undefined;
+          MyRouter.go(interInResponse.redirect);
+          return;
+        }
+      }
+      page = mathed.route.modulePage;
+      this.currentParamsSlug = mathed.paramsSlug;
     }
     
     MyDOM.clearDOM();
-    MyCentralService.clearServices();
+    MyCentralService.clearServices(); 
     const newPage = page ?? this.notFound;
+    this.currentRouteS = path;
     MyDOM.renderTree(newPage);
+  }
+
+  private interOut(): InterceptorReturn | void{
+    const router = new MyRouter();
+    if(!router.currentRoute?.out) return;
+    const e = {
+      params: {
+        slugs: MyRouter.paramSlug(),
+        querys: MyRouter.queryParams()
+      }
+    }
+    return router.currentRoute.out(router.currentRouteS, e)
+  }
+
+  private interIn(path: string, params: any): InterceptorReturn | void{
+    const router = new MyRouter();
+    if(router.currentRoute?.in === undefined) return;
+    return router.currentRoute.in(path, params)
   }
 
   /**
@@ -134,7 +189,7 @@ export class MyRouter {
     window.history.pushState({path, discreet}, path, window.location.origin + path);
     router.renderRoute();
   }
-
+  
   /**
    * Método que navegar hacia atrás en la navegación
    */
@@ -146,9 +201,13 @@ export class MyRouter {
    * Método que navegar hacia adelante en la navegación
    */
   static next(){
-    window.history.forward()
+    window.history.forward();
   }
 
+  /**
+   * Método encargado de obtener los parámetros los params slug
+   * en la url actual
+   */
   static paramSlug<T = any>(): T | undefined{
     const router = new MyRouter();
     return router.currentParamsSlug;
@@ -157,8 +216,25 @@ export class MyRouter {
   /**
    * Método encargado de obtener los datos discretos de la página actual
    */
-  static disgreetData(): any{
+  static disgreetData<T = any>(): T | undefined{
     const router = new MyRouter();
     return router.currentDiscreet;
   }//end discreetData
+  
+  /**
+   * Método encargado de obtener los query params de la url
+   */
+  static queryParams<T = any>(): T | undefined{
+    const searchUrl = window.location.search;
+    let matchQuerys: boolean = false;
+    const q = searchUrl.slice(1).split('&')
+    const qq = q.filter(q=>q!=='')
+    const querys = qq.reduce((acc: any, cur)=>{
+      matchQuerys = true;
+      acc[cur.split('=')[0]] =  cur.split('=')[1]
+      return acc
+    },{} as any)
+    if(!matchQuerys) return;
+    return querys
+  }//queryParams
 }

@@ -1,5 +1,8 @@
 import { MyShelf } from "@my_framework/store/myShelf";
 
+/**
+ * interfa para funciones reductoras
+ */
 export interface ReducerI<T> {
   [key: string]: (data: T, payload: any) => T;
 }

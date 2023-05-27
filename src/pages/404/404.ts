@@ -2,7 +2,7 @@ import { MyComponent } from "@my_framework/core/myComponent";
 import { MyNode } from "../../lib/my_framework/decorators/myNode";
 
 @MyNode({selector: 'not-found'})
-export class _404Component extends MyComponent{
+export class _404Component1 extends MyComponent{
   build(): string {
     return this.template(()=>`
       <main>

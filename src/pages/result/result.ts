@@ -31,6 +31,7 @@ export class ResultComponent extends MyComponent{
       </p>
       <p class="info">todo lo que debes saber en este <a href="https://github.com/LeonardoPatinoMolina/my-framework" target="_blank">enlace</a></p>
       <button class="btn_neumorfus" ${_.on('click', ()=>{MyRouter.back()})}>Volver</button>
+      <button class="btn_neumorfus" ${_.on('click', ()=>{MyRouter.go('/vega')})}>vega</button>
     </main>
     `);
   }

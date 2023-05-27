@@ -1,6 +1,6 @@
+import { cloneDeep } from '../shared/cloneDeep';
 import { MyGlobalStore } from "./myGlobalStore";
 import { ActionT, ReducerI, ShelfConfigI, ShelfReturnI } from "./types/myShelf.types";
-
 export class MyShelf<T> {
   private keyStore: string;
 
@@ -30,7 +30,7 @@ export class MyShelf<T> {
     //partiendo de los reducers configurados
     this._actions = Object.entries(reducers).reduce((acc: any, [k, v]) => {
       acc[`${k}Dispatch`] = (payload: any) => {
-        this._data = v(this._data, payload);
+        this._data = v(cloneDeep(this._data), payload);
         MyGlobalStore.dispatch(this.keyStore);
       }
       return acc;
@@ -52,6 +52,7 @@ export class MyShelf<T> {
  * Función factory encargada de crear un nuevo shelf para su posterior 
  * uso en el store
  */
+// export const createShelf = <T = any>(args: ShelfConfigI<T>): ShelfReturnI<T> => {
 export const createShelf = <T = any>(args: ShelfConfigI<T>): ShelfReturnI<T> => {
   const newShelf = new MyShelf<T>(args);
   return {
