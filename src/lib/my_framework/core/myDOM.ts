@@ -67,18 +67,28 @@ export class MyDOM {
   }
 
   /**
-   * Método encarga de explorar, es decir, recorrer el un árbol nodo a nodo de forma descendene
-   * partiendo de su nodo raíz
+   * Algoritmo de Búsquea en amplitud que se encarga de explorar el árbol ejecutando acciones en cada
+   *  visita en los nodos del árbol partiendo de un nodo raiz
    * @param node - nodo raiz a partr del cual se selecciona el árbol para explorar
    * @param action - función destinada a reicibir cada nodo por su parámetro
-   */
-  private exploreTree(node: MyNodeI, action: (node: MyNodeI)=>void):void {
-    action(node);
-    node.children.forEach(child=>{
-      const childN = MyDOM.getMemberNode(child)!
-      this.exploreTree(childN, action)
-    })
+  */
+  private exploreTreeBFS(node: MyNodeI, action: (node: MyNodeI)=>boolean | void): void{
+    const queue: string[] = [];
+    queue.push(node.key);
+
+    while (queue.length > 0) {
+      const currentNodeKey = queue.shift()
+      const childN = MyDOM.getMemberNode(currentNodeKey!)
+      if(childN === undefined) throw new Error('Inconsistencia entre el árbol y el componente referenciado '+currentNodeKey);
+
+      const check = action(childN!)//el check determina si la exploración continúa o si es interrumpida
+      if(check) break;
+      for (const ch of childN.children) {
+        queue.push(ch)
+      }//end for
+    }//end while
   }
+
   /**
    * Método encarga de explorar, es decir, recorrer un árbol nodo a nodo de forma ascendente
    * partiendo de los notos extremos hasta la raiz
@@ -88,7 +98,7 @@ export class MyDOM {
   private exploreTreeReverse(node: MyNodeI, action: (node: MyNodeI)=>void):void {
     node.children.forEach(child=>{
       const childN = MyDOM.getMemberNode(child)!
-      this.exploreTree(childN, action)
+      this.exploreTreeReverse(childN, action)
     })
     action(node);
   }
@@ -102,7 +112,7 @@ export class MyDOM {
   static notifyInTree(keyNode: string, notify: (component: MyNodeI)=>void){
     const dom = new MyDOM()
     const nodeTarget = MyDOM.getMemberNode(keyNode)!;
-    dom.exploreTree(nodeTarget,notify)
+    dom.exploreTreeBFS(nodeTarget,notify)
   }
 
     /**
@@ -125,7 +135,7 @@ export class MyDOM {
     const dom = new MyDOM();
     const rootNode = key === 'root' ? dom.tree.root : MyDOM.getMemberNode(key);
 
-    dom.exploreTree(rootNode!, (node)=>{
+    dom.exploreTreeBFS(rootNode!, (node)=>{
       if(node.key === dom.firstKey){
         node.instance.render(dom.root!);
         return;

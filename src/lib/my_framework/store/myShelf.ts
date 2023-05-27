@@ -28,13 +28,13 @@ export class MyShelf<T> {
 
     //generamos todos las funciones disparadoras
     //partiendo de los reducers configurados
-    this._actions = Object.entries(reducers).reduce((acc, [k, v]) => ({
-      ...acc,
-      [`${k}Dispatch`]: (payload: any) => {
+    this._actions = Object.entries(reducers).reduce((acc: any, [k, v]) => {
+      acc[`${k}Dispatch`] = (payload: any) => {
         this._data = v(this._data, payload);
         MyGlobalStore.dispatch(this.keyStore);
       }
-    }), {} as typeof this._actions); //end reduce
+      return acc;
+    }, {} as typeof this._actions); //end reduce
   }//end constructor
 
   get name() {

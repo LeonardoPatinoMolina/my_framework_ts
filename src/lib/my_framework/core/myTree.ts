@@ -80,14 +80,14 @@ export class MyTree {
     this.mismatches(currentTree, oldTree);
     if(oldTree.children.length !== currentTree.children.length) return;
     for (let i = 0; i < currentTree.children.length; i++) {
-      const element1 = currentTree.children[i];
-      const element2 = oldTree.children[i];
+      const currentChild = currentTree.children[i];
+      const oldChild = oldTree.children[i];
     
-      if(!(element1!.node instanceof Text)){
-        const outcasting = element1!.node.getAttribute('data-rootcomponent-outcast');
+      if(!(currentChild!.node instanceof Text)){
+        const outcasting = currentChild!.node.getAttribute('data-rootcomponent-outcast');
         if(outcasting) continue; //nos aseguramos que los hijos desamparados no sean reconciliados jeje
       }
-      this.reconsiliation(element1!, element2!);
+      this.reconsiliation(currentChild!, oldChild!);
     }
   }//end reconisliation
 
@@ -98,9 +98,7 @@ export class MyTree {
   private mismatches(currentTree: MyTreeI, oldtree: MyTreeI): void{
     if(currentTree.name === 'TEXT'){ //en caso de ser un nodo de texto directamente alteramos su contenido
       if(currentTree.node.textContent !== oldtree.node.textContent ){
-        // oldtree.node.replaceWith(currentTree.node);
         oldtree.node.textContent = currentTree.node.textContent
-        // oldtree.node = currentTree.node
         this.isReconciled = true;
       }
       return;
@@ -118,7 +116,7 @@ export class MyTree {
       return;
     }
     
-    this.findMisChildren(currentTree,oldtree);
+    this.findMisChildren(currentTree,oldtree); //checamos una posible deiscrepancias de hijos
     this.findMisAttr(currentTree,oldtree);
 
   }//end mismatches
@@ -173,4 +171,5 @@ export class MyTree {
     }//end else
     oldT.attr = currentT.attr;
   }//end findAttr
+
 }

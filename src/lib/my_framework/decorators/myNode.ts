@@ -39,13 +39,14 @@ export function MyNode(Fargs: FamilyArgsI) {
          * hace referencia a la clase del componente que extiende de la clase MyComponent
          */
         const proto = this as any
-        //obtenemos los servicios que están destinados a se proveidos en el módulo del componente
-        let services: object = proto.module.services?.reduce((acc: object, curService: any)=>{
+        //obtenemos los servicios que están destinados a ser proveidos en el módulo del componente
+        let services: object = proto.module.services?.reduce((acc: any, curService: any)=>{
           if(curService.provideIn !== 'all'){
             const check = curService.provideIn.some((p: string)=>p === proto.module.key);
             if(!check) return acc;
           }
-          return {...acc, [curService.serviceName]: new curService()}
+          acc[curService.serviceName] = new curService();
+          return acc;
         },{});
         
         const instancia: MyComponent = new proto(services);
@@ -111,17 +112,20 @@ export function MyNode(Fargs: FamilyArgsI) {
             return realiceAttach;
           }
 
-          return {
-            children: {
-              ...acc.children, 
-              [cur.selector]: (dataBuilder: DataBuilderT)=>wrapperAttachmany(dataBuilder)
-            },
-            child: {
-              ...acc.child, 
-              [cur.selector]: (args?: ArgsAttachI)=> wrapperAttachOne(args)
-              // [cur.selector]: (args?: ArgsAttachI)=> wrapperAttachOne(interceptorT(args?.key), args?.props)
-            } 
-          }
+          acc.children[cur.selector] = (dataBuilder: DataBuilderT)=>wrapperAttachmany(dataBuilder)
+          acc.child[cur.selector] = (args?: ArgsAttachI)=> wrapperAttachOne(args)
+          return acc;
+          // return {
+          //   children: {
+          //     ...acc.children, 
+          //     [cur.selector]: (dataBuilder: DataBuilderT)=>wrapperAttachmany(dataBuilder)
+          //   },
+          //   child: {
+          //     ...acc.child, 
+          //     [cur.selector]: (args?: ArgsAttachI)=> wrapperAttachOne(args)
+          //     // [cur.selector]: (args?: ArgsAttachI)=> wrapperAttachOne(interceptorT(args?.key), args?.props)
+          //   } 
+          // }
         },{child: {}, children: {}} as any);
         
         if(proto.module?.nodes.length){
