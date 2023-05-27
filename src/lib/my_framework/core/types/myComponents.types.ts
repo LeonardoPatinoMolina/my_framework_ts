@@ -7,7 +7,8 @@ export interface DirectiveTemplateI {
   myIf: (predicate: boolean)=>string,
   child: (key: string)=>(args?: ArgsAttachI)=>string
   children: (key: string)=> (dataBuilder: DataBuilderT)=>string,
-  myMul: (amount: number)=> string
+  myMul: (amount: number)=> string,
+  If?: (condition: boolean, template: string)=>string
 }
 //
 export interface BuildArgsI{

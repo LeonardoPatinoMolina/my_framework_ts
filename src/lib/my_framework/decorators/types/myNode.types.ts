@@ -22,7 +22,8 @@ export interface ChildrenAttachingI{
 }
 export interface ArgsAttachI{
   key?: string,
-  props?: {[x:string]: any}
+  props?: {[x:string]: any},
+  hidden?: boolean;
 }
-export type DataBuilderT = Array<{key: string, props?: any}>
+export type DataBuilderT = Array<{key: string, props?: any, hidden?: boolean}>
 

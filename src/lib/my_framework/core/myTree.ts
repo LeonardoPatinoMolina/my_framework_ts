@@ -26,7 +26,6 @@ export class MyTree {
     const oldTree = this.generateTree(targetNode);
     const newTree = this.generateTree(this.owner.body);
     this.reconsiliation(newTree, oldTree)
-    // this.newReconciliationAlgoritm(oldTree, newTree)
     if(this.isReconciled){
       this.isReconciled = false;
       return true
@@ -145,9 +144,13 @@ export class MyTree {
     const oldEntries = Object.entries(oldT.attr);
 
     function removeAttr(){
-       oldEntries.forEach(([key,value]: any)=>{
-        if(!(oldT.node instanceof Text)) oldT.node.removeAttribute(key);
-      })
+      for (let i = 0; i < oldEntries.length; i++) {
+        const old = oldEntries[i]
+        const cur = currentEntries[i]
+        if(cur === undefined){//en caso de no encontrar el actual atributo en el árbol nuevo, removerlo
+          if(!(oldT.node instanceof Text)) oldT.node.removeAttribute(old[1].name);
+        }
+      }
     }
 
     function addAttr(){

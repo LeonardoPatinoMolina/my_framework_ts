@@ -2,17 +2,22 @@ import { MyComponent } from "../../lib/my_framework/core/myComponent.js";
 import { MyNode } from "../../lib/my_framework/decorators/myNode.js";
 import { MyRouter } from "../../lib/my_framework/router/myRouter.js";
 
+interface ParamsResultI{
+  result: number,
+  base: number
+}
+
 @MyNode({selector: 'my-result'})
 export class ResultComponent extends MyComponent{
 
-  result: number = MyRouter.params().result;
+  params = MyRouter.paramSlug();
 
-  build(){
+  build(): string{
     
     return super.template((_)=>`
     <main>
       <h1>Mi Resultado</h1>
-      <p class="number">${this.result}</p>
+      <p class="number">${this.params?.result}</p>
       <p align="center">
         <img 
           draggable="false" 

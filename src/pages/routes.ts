@@ -4,5 +4,5 @@ import { ResultModule } from "./result/result.module"
 
 export const ROUTES: RoutesI[] = [
   {path: "/", modulePage: CounterModule},
-  {path: "/result", modulePage: ResultModule, params: ['result']},
+  {path: "/result/:result", modulePage: ResultModule},
 ]

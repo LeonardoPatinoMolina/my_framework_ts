@@ -92,11 +92,15 @@ export class MyTemplateEngine{
       myIf: this.myIf,
       child: getChild,
       children: getChildren,
-      myMul: this.myMul
+      myMul: this.myMul,
+      If: (condition: boolean, template: string)=>{
+        if(condition)return template;
+        else return '';
+      }
     }
 
     let templatetext = builder(obj);
-    templatetext = this.getTemplateDepurated(templatetext);
+    // templatetext = this.getTemplateDepurated(templatetext);
     templatetext = this.getTemplateAfterDirective(templatetext);
     
     return templatetext;

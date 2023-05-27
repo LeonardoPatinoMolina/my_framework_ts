@@ -2,5 +2,9 @@
 export interface RoutesI {
   path: string;
   modulePage: any;
-  params?: string[]
+}
+
+export interface MatchRouteI<T = any>{
+  modulePage: any,
+  params: T
 }

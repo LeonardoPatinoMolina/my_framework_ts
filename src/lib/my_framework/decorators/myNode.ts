@@ -88,8 +88,12 @@ export function MyNode(Fargs: FamilyArgsI) {
            * al template, en esta capa se dota de su key única además de emparentarlo
            * en el árbol, es a través de este que se injectan las props en el template
            */
-          const wrapperAttachOne = (childKey: string, propsC?: any,): string=>{
-            const inst = cur.factory(key,childKey,propsC);//instanciamos el componente
+          // const wrapperAttachOne = (childKey: string, propsC?: any,): string=>{
+          const wrapperAttachOne = (args?: ArgsAttachI): string=>{
+            if(args?.hidden) return '';//si está oculto se cancela el attaching
+            // const inst = cur.factory(key,childKey,propsC);//instanciamos el componente
+            const childKey = interceptorT(args?.key)
+            const inst = cur.factory(key,childKey,args?.props);//instanciamos el componente
             //emparentamos con el nodo padre
             const parentNode = MyDOM.getMemberNode(key)!;
             parentNode.children.add(childKey);
@@ -99,7 +103,8 @@ export function MyNode(Fargs: FamilyArgsI) {
 
           const wrapperAttachmany = (builder: DataBuilderT): string => {
             const realiceAttach = builder.reduce((accData,curData)=>{
-              accData += wrapperAttachOne(interceptorT(curData.key), curData.props);
+              // accData += wrapperAttachOne(interceptorT(curData.key), curData.props);
+              accData += wrapperAttachOne(curData);
               return accData;
             },'')
             
@@ -113,7 +118,8 @@ export function MyNode(Fargs: FamilyArgsI) {
             },
             child: {
               ...acc.child, 
-              [cur.selector]: (args?: ArgsAttachI)=> wrapperAttachOne(interceptorT(args?.key), args?.props)
+              [cur.selector]: (args?: ArgsAttachI)=> wrapperAttachOne(args)
+              // [cur.selector]: (args?: ArgsAttachI)=> wrapperAttachOne(interceptorT(args?.key), args?.props)
             } 
           }
         },{child: {}, children: {}} as any);
