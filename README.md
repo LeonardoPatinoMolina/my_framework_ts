@@ -4,99 +4,137 @@
   <img src="https://i.postimg.cc/RhrgmkP4/logo-myframework-ts-big.png" width="40%" height="auto" alt="my framework logo" title="my framework logo">
 </p>
 
-El presente ejercicio es una versión potenciada de uno anterior llamado __[My framework](https://github.com/LeonardoPatinoMolina/my-framework)__, en el cual me propuse crear un framework front-end de _javascript_ desde los cimientos teniendo como única dependencia de terceros __vite__; en esta ocasión fui un paso más adelante y apunté a mejorar muchas carácterísticas que resultaron bastante problemáticas luego de experimentar con casos de prueva más elavorados.
+El presente ejercicio es una versión potenciada de uno anterior llamado __[My framework](https://github.com/LeonardoPatinoMolina/my-framework)__, en el cual me propuse crear un framework front-end de _javascript_ desde los cimientos teniendo como única dependencia de terceros __vite__; en esta ocasión fui un paso más adelante y apunté a mejorar muchas carácterísticas que resultaron bastante problemáticas en my framework, ello luego de experimentar con casos de prueva más elavorados.
 
-Otro punto a destacar es que my framework apuntaba a ser un reproducción de __React.js__, pero recientemente he interactuado con otras tecnologías como __Angular 16__ y puedo decir que, exponerme a otras posibilidades y enfoques influyó directamente en el futuro de este proyecto.
+My framework apuntaba a ser un reproducción de __[React.js](https://legacy.reactjs.org/)__, pero recientemente he interactuado con otras tecnologías como __[Angular](https://angular.io/)__ y exponerme a otras posibilidades y enfoques influyó directamente en el futuro de este proyecto. El primer gran cambio que salta a la vista es la inclusión de __Typescript__ como base, haciendo que esta inventiva cambie su nombre a __My Framework TS__. Pero este es solo el comienzo, debo admitir que la distancia entre este proyecto y mi anterior es abismal. Señalo a continuación algunos aspectos clave que recibieron ciertas modificaciones algunas importantes otras algo leves.
 
-El primer gran salto que salta a la vista es la incluisión de __Typescript__ como base, haciendo que su nombre cambie a __My Framework TS__
-
-## __Cuadro comparativo My Framework vs My Framework TS__
+## __Cuadro comparativo: My Framework vs My Framework TS__
 Aspecto a comparar |My Framework|My Framework TS|
 |-|-|-|
-|__Ciclo de vida de componentes__|Se encuentra centralizado en el funcionamiento de un atributo __$__ el cual es capaz de ejecutar lógica reactiva, esta característica sería análoga a useEffect de React.js. Respecto a la participación del ciclo en el _store global_, se encuentra acoplado de forma tal, que la propagación de una modificación del store al cual se encuentra subscrito, demanda un re-renderizado obligatorio.|Además de su atributo __$__, posee un métodos adicional ``"destroy()"`` específico para la des-renderización del componente, pudiendo ejecutar lógica durante dicho evento. Los re-renderizados obligatorios por demanda del store global han sido reemplazados por una implementación del patrón observer, en el cual, el componente cuenta con una notificación en virtud de la modificación del store al cual se encuentra subscrito, el componente puede ejecutar lógica en consecuencia pudiendo decidir si se re-renderiza o no|
-|__Renderizado condicional de componentes y nodos__|Todos los componentes tienen la capacidad de renderizarse en cualquier momento que se demande, incluso pueden hacerlo por lotes, todo ello en base a un sistema de attaching, en el cual el componente debe ejecutar un método en el __template__ donde fijará una raíz de referencia; sin embargo, cada componente renderizado demanda una __key__ única, de lo contrario su comportamiento no será el esperado. En cuanto al renderizado condicional de nodos comunes, puede lograrse con interpolación de lógica en el template, pero realmente  no es una caracteística contemplada en my framework|Todos los componentes tienen la capacidad de renderizarse en cualquier momento que se demande, incluso pueden hacerlo por lotes, todo ello en base a una conbinación de __selector__ y __llave (key)__, esto consiste en un sistema de parentezco mediado por módulos, donde el componente debe declararse como nodo de un módulo y hasta entonces puede implementarse en el __template__, la ventaja de este sistema frente al anterior es una reducción del riesgo de conflicto entre keys, esto surgió por una serie de problemas que emergían del previo sistema de llaves por componente. En cuanto al renderizado condicional de nodos comunes, hay a disposición del template dos directivas estructurales diseñadas específicamente para ello, inspirado en __Angular 16__|
-|__Estado local de componente__|Todo el estado del componente está centralizado en una propiedad __state__ específica de la clase del componente, esta tiene la capacidad de persistir entre re-renderizados. Existe un método explicito para actualizar el estado del componente, este funciona de forma similar al método __setState()__ de los _StateFulWidget_ de __Flutter__, el cual evalúa si hubo algún cambio en el estado del componente y lo re-renderiza en consecuencia, en caso de no hallar cambios, simplemente ignora su invocación.|El estado del componente se encuentra descentralizado, en sí, toda la clase persiste entre re renderizados, esto debido a que el sistema de instanciamiento de componentes es mucho más sofísticado y cualquier propiedad puede ser usada como almacén de datos persistente, al igual que un estado común, estos no persisten ante un des-renderizado del componente, el método de actualizado de estado fue reemplazado por un método "__refresco__", la principal ventaja de este cambio es que ahora sí disponemos de todo el cuerpo de la clase para ejecutar lógica, pudiendo declarar métodos y utilizarlos en el template, algo impensable en my framework|
-|__Enrutamiento__|Cuenta con un sistema de enrutamiento sencillo del lado del cliente capaz de renderizar páginas de forma satisfactoria y añadir estados al historial de navegación|Conserba el mismo principio del sistema de enrutamiento de my framework, pero el enfoque es distinto, pues ahora se enrutan módulos en lugar de componentes, y la sintaxis de implementación de params entre navegación es un poco más imperativa para evitar sobrecargas de cómputo|
-|__Virtual DOM__|Técnicamente inexistente, el único DOM virtual que implementa my framework refleja la estructura del ``álrbol de componentes``, en otras palabras, my framework solo se preocupa por la dispocisión estructural de los componentes, no del DOM. Debido a que cada componente guarda una referencia de su nodo raíz, no requieren mayor información del DOM que esa|My framework ts posee un sistema de DOM virtual dinámico y parcial, es decir, cada componente posee su propio __virtual DOM__ para efectos del __algoritmo de reconciliación__, este refleja la disposición estructural de los nodos del DOM que corresponden al componente y es generado en el primer render y durante cada re-renderizado con propósitos de reactividad|
-|__Reactividad__|El sistema de reactividad de my framework se basa en un redibujado de la interfaz a __nivel de componente__, esto significa que cada véz que se demanda una actualización de la vista, no importa que tan ``insignificante`` sea el cambio, todo el árbol de nodos del componente será redibujado, incluyendo sus componentes hijos, esto garantiza que la actualización de la vista será efectiva y reflejará todos los cambios efectuados en el template|La reactividad en my framework ts se basa en un sensillo __algoritmo de reconciliación__, este realiza un análisis del __dom virtual__ que refleja los cambios efectuados en el template y lo compara con el __DOM__ actual en busca de discrepancias, en caso de hallarlas realiza las modificaciones correspondientes. Este sistema de reactividad implica un redibujado de la interfaz a __nivel de nodo__, es decir, cada vez que se demanda un refresco de la vista, el algoritmo se encarga que solo los nodos que presenten cambios sean afectados|
+|__Ciclo de vida de componentes__|Se encuentra centralizado en el funcionamiento de un atributo __$__ el cual es capaz de ejecutar lógica reactiva, esta característica sería análoga a useEffect de __React.js__. Respecto a la participación del ciclo de vida en el _store global_, se encuentra acoplado de forma tal, que la propagación de una modificación del store al cual se encuentra subscrito, demanda un re-renderizado obligatorio.|Además de su atributo __$__, posee un métodos adicional ``"destroy()"`` específico para la des-renderización del componente, pudiendo ejecutar lógica durante dicho evento. Los re-renderizados obligatorios por demanda del store global han sido reemplazados por una implementación del patrón observer, en el cual, el componente ahora cuenta con un método notificador subordinado las mutaciones que pueda sufrir el store al que se encuentra subscrito, esto desacopla el ciclo de vida del componente y lo convierte en un consumidor más de la información global, al conocer estos eventos puede decir si ejecuta lógica en consecuencia pudiendo re-renderizarse o no, esto garantiza que los componentes no serán los únicos capaces de consumir el estado global|
+|__Renderizado condicional de componentes y nodos__|Todos los componentes tienen la capacidad de renderizarse en cualquier momento que se demande, incluso pueden hacerlo por lotes, todo ello en base a un sistema de attaching, en el cual el componente debe ejecutar un método en el __template__ donde fijará una raíz de referencia; sin embargo, cada componente renderizado demanda una __key__ única, de lo contrario su comportamiento no será el esperado. En cuanto al renderizado condicional de componentes puede realizarse lógica interpolada en el template para realizar el tattach a conveniencia, y esto mismo ha de aplicarse para nodos comunes|Todos los componentes tienen la capacidad de renderizarse en cualquier momento que se demande, incluso pueden hacerlo por lotes, todo ello en base a una conbinación de __selector__ y __llave (key)__, esto consiste en un sistema de parentezco mediado por módulos, donde el componente debe declararse como __nodo__ de un módulo y hasta entonces puede implementarse en el __template__, la ventaja de este sistema frente al anterior es una reducción del riesgo de conflicto entre keys, esto surgió por una serie de problemas que emergían del previo sistema de llaves por componente. En cuanto al renderizado condicional de componentes estos son acoplados al template mediante una invocación de una directiva espeifica para ello, en la cual se puede determinar un condicional para un renderizado asistido, y para los nodos comunes hay a disposición del template dos directivas estructurales diseñadas específicamente para ello, inspirado en la tecnología __Angular__|
+|__Estado local de componente__|Todo el estado del componente está centralizado en una propiedad __state__ específica de la clase del componente, esta tiene la capacidad de persistir entre re-renderizados. Existe un método explicito para actualizar el estado del componente, este funciona de forma similar al método __setState()__ de los _StateFulWidget_ de __Flutter__, el cual evalúa si hubo algún cambio en el estado del componente y lo re-renderiza en consecuencia, en caso de no hallar cambios, simplemente ignora su invocación, este sitema evita re renderizados innecesarios debido al alto costo que ello implica|El estado del componente se encuentra descentralizado. En sí, __toda la clase__ del componente persiste entre re renderizados, esto gracias a que el sistema de instanciamiento de componentes es mucho más sofísticado y cualquier propiedad puede ser usada como almacén de datos persistente, al igual que un estado común, estos no persisten ante un des-renderizado del componente, el método de actualizado de estado fue reemplazado por un método __refresh()__, la principal ventaja de este cambio es que ahora sí disponemos de todo el cuerpo de la clase para ejecutar lógica, pudiendo declarar métodos y utilizarlos en el template, algo impensable en my framework, sin embargo, hay que tener en cuenta el __ownership__ de los métodos para su adecuado uso en el template|
+|__Enrutamiento__|Cuenta con un sistema de enrutamiento sencillo del lado del cliente capaz de renderizar páginas de forma satisfactoria y añadir estados al historial de navegación empleándolos como params discretos, __NO__ tiene contemplado ``params slug`` ni la obtención de los ``queryparams`` en ruta|Implementa un sistema de enrutamiento con rutas declaradas tal como my framework, pero el enfoque es muy distinto, ahora se enrutan módulos en lugar de componentes y en esta implementación __SÍ__ hay soporte de ``slugsParams`` y también se contempla la obtención de ``queryParams`` en ruta, además de conservar el paso de datos discretos, pero siendo esta una característica específica para ello, esto signidifica que las rutas pueden ser dinámicas algo impensable en my framework|
+|__Virtual DOM__|Técnicamente inexistente, el único DOM virtual que implementa my framework refleja la estructura del ``álrbol de componentes``, en otras palabras, my framework solo se preocupa por la dispocisión estructural de los componentes, no del DOM. Debido a que cada componente guarda una referencia de su nodo raíz, no requieren mayor información del DOM que esa|__My framework ts__ posee un sistema de DOM virtual para efectos del __algoritmo de reconciliación__, este refleja la disposición estructural de los nodos del DOM que corresponden al componente, este es generado en el primer renderizado y a partir de allí durante cada re-renderizado se generan virtualdoms parciales con propósitos de reactividad|
+|__Reactividad__|El sistema de reactividad de my framework se basa en un redibujado de la interfaz a __nivel de componente__, esto significa que cada véz que se demanda una actualización de la vista, no importa que tan ``insignificante`` sea el cambio, todo el árbol de nodos del componente será redibujado, incluyendo sus componentes hijos, esto garantiza que la actualización de la vista será efectiva y reflejará todos los cambios efectuados en el template|La reactividad en my framework ts se basa en un sensillo __algoritmo de reconciliación__, este realiza un análisis del __DOM virtual__ que refleja los cambios efectuados en el template y lo compara con una instantanea virtual del __DOM__ con la actual realiza una bíusqueda de discrepancias, en caso de hallarlas realiza las modificaciones correspondientes. Este sistema de reactividad implica un redibujado de la interfaz a __nivel de nodo__, es decir, cada vez que se demanda un refresco de la vista, el algoritmo se encarga que solo los nodos que presenten cambios sean afectados, este implementación es mucho menos costosa y mucho más sofísticada que la anterior|
 
 <hr>
 
 ## __Tecnologías__
-Las tecnologías empleadas son __HTML 5__ y __Javascrit ES6__, los estilos no son objeto de interés para el presente ejercicio, solamente la estructura y manipulación de la interfaz; al contar con html para el maquetado, puede aplicarse cualquiera de los estilizados que este admita: __CSS__, __SASS__, etc.
+Las tecnologías empleadas son __HTML 5__ y __Typescript 5.0.2__, los estilos no son objeto de interés para el presente ejercicio, solamente la estructura y manipulación de la interfaz; al contar con html para el maquetado, puede aplicarse cualquiera de los estilizados que este admita: __CSS__, __SASS__, etc.
 
 <hr>
 
 ## __Entrada de la App__
-My framework tiene una estructura inicial inspirada en React.js esto significa que toda la composición será anclada a una raíz que se establece desde el inicio del proyecto, la sintaxis es la siguiente:
+``My framework ts`` tiene una estructura inicial inspirada en __React.js__ esto significa que toda la composición será anclada a una raíz que se establece desde el inicio del proyecto, la sintaxis es la siguiente:
+
 ~~~Typescript
+//src/main.ts
 import { MyDOM } from "@my_framework/core/myDOM";
 import { MyRouter } from "./lib/my_framework/router/myRouter";
 import { AppModule } from "./app.module";
 
 const root = MyDOM.createRoot(document.getElementById('root'));
-root.render(AppModule)
+root.render(AppModule);
 ~~~
-La clase __MyDom__ nos porevee una serie de métodos de interés para la estructura general del árbol de componentes, pero realmente son muy pocos los que nos interesan, el primero es el método estático ``createRoot()``, este método establece cuál será la raíz de la app en el __DOM__, este será el pivote y la referencia para renderizar todo el árbol de componentes. Este retorna un objeto con una función _render()_ la cual recibe como parámetro el módulo que se espera sea renderizado en la raíz
+La clase __MyDOM__ nos porevee una serie de métodos de interés para la estructura general del árbol de componentes, pero realmente son muy pocos los que nos interesan, el primero es el método estático ``createRoot()``, este método establece cuál será la raíz de la app en el __DOM__, este será el pivote y la referencia para renderizar todos los módulos que convengan. Este retorna un objeto con una función _render()_ la cual recibe como parámetro el módulo que se espera sea renderizado en la raíz
+
+El fichero con esta sintaxis inicial es el que debe ser referenciado en nuestra etiuqtea __script__ en nuestro ``index.html`` el cual tendrá la siguiente apariencia:
+~~~HTML
+<!--./index.html -->
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="assets/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
+
+~~~
+
+<hr>
+
+## __Módulos__
+Los módulos son ``representaciones de grupo``, con ellos podemos construir árboles de componentes, injectar __servicios comunes__ y establecer un sistema de parentezco más confiable que en el anterior sistema de árboles sin módulo de __my framework__, esto nos agrega una capa más a la composisción permitiendo granularizar aún más el diseño, mejorar la experiencia de desarrollo, la escalabilidad y capacidad de reutilización.
+
+en proceso...
 
 <hr>
 
 ## __Componentes__
-Los componentes son fragmentos o maquetas que nos permiten componer las vistas de forma modular, cada uno de ellos se responsabiliza de su diseño y lógica intrínseca, de esta forma podemos modularizar nuestro código haciendo más amena la experiencia de desarrollo, en my framework ts estos se basan en plantillas literales que siguen un par de reglas para poder transformarse en código html entendible para el navegador, poseen la siguiente sintaxis:
+Los componentes son fragmentos o maquetas que nos permiten componer las vistas de forma modular, cada uno de ellos se responsabiliza de su diseño y lógica intrínseca, de esta forma podemos modularizar nuestro código haciendo más amena la experiencia de desarrollo, ``en my framework ts`` estos se basan en plantillas literales que siguen ciertas reglas para poder transformarse en código html entendible para el navegador, poseen la siguiente sintaxis:
 ~~~Typescript
+//src/components/counter.ts
 import { MyComponent } from "@my_framework/component";
 
-@MyNode({selector: 'my-counter'})
+//decorador que designa al componente como un nodo participante
+@MyNode({selector: 'my-counter'}) 
+//clase madre que hereda toda la lógica necesaria para generar un componente de clase
 export class CounterComponent extends MyComponent{
-  count: number = 0;
+  count: number = 0; //propiedad local del componente
 
-  addCount = ()=>{
-    this.refresh(()=>{
-      this.state.count++;
-    })
+  //método propio del componente
+  addCount = ()=>{ 
+    //método especializado que invoca un refresco de la vista
+    this.refresh(()=>{  
+      this.count++;
+    });
   }
 
+  //método especualizado encargado de generar el template
+  //con la sintaxis html del componente
   build(){
+    //método especializado encargado de aplicar directivas y 
+    //operaciones especiales durante generación del template
     return this.template((_)=>`
     <main>
       <h2>Mi Contador</h2>
+      ${/*Propiedad interpolada para mostrar en vista*/}
       <p>${this.count}</p>
+      ${/*directiva "on" para añadir eventos en línea*/}
       <button ${_.on('click', this.addCount)}>add</button>
     </main>
     `);
   }
 }
 ~~~
-Inmediatamente se puede apreciar que se trata de un __componente de clase__, efectivamente my framework ts tiene como base componentes de clase, tal y como lo era mi anterior ejercicio: [__My framework__](https://github.com/LeonardoPatinoMolina/my-framework), pero este es posee ciertas novedades.
+Inmediatamente se puede apreciar que se trata de un __componente de clase__, efectivamente, my framework ts tiene como base componentes de clase, tal y como lo era mi anterior ejercicio: [__My framework__](https://github.com/LeonardoPatinoMolina/my-framework), pero este posee ciertas novedades.
  
- El componente __CounterComponent__ está heredando de la clase __MyComponent__, de la acual obtiene todos los métodos propios de un componente reactivo, pero advertimos una diferencia respecto a my framework: adicionalmente la clase está siendo decorada con el decorador de fabrica __@MyNode()__ este recibe obligatoriamente un objeto como parámetro con el atributo __selector__.
+ El componente __CounterComponent__ está heredando de la clase __MyComponent__, de la acual obtiene todos los métodos propios de un componente reactivo, pero advertimos una diferencia respecto a my framework: adicionalmente la clase está siendo decorada con el decorador de fabrica __@MyNode()__ este recibe obligatoriamente un objeto como parámetro con el atributo obligatorio __selector__.
 
-En este caso tenemos un clásico contador, gracias a este ejemplo tan típico tengo espacio para exponer rápidamente la existencia del método refresh, este es el método utilizado por el componente para sus re-renderizados.
+En este caso tenemos un clásico contador, gracias a este ejemplo tan típico tengo espacio para mostrar rápidamente la existencia del método __refresh()__, este es el método utilizado por el componente para invocar sus re-renderizados.
 
 ### __MyComponent__
-La clase cuenta con __ocho 8__ atributos públicos y unos __4 cuatro 4__ getters que tendremos a nuestra disposición para diversas operaciones, estos son los siguientes:
+La clase cuenta con __ocho (8)__ atributos públicos y unos __4 cuatro 4__ getters que tendremos a nuestra disposición para diversas operaciones, estos son los siguientes:
 
 ### __Atributos__
 
 - __$__: atributo encargado de efectos reactivos al ciclo de vida del componente, este atributo es una instancia de otra clase que detallaré más adelante.
-- __body__: almacena la estructura ``HTML`` del template, esta no es una referencia al DOM, su finalizad es para detección de cambios entre re-renderizados, y realización de directivas estructurales, todas ellas operaciones internas, en general tiene una utilizad de solo lectura.
+- __body__: almacena la estructura ``HTML`` del template, esta no es necesariamente una referencia al DOM, su finalizad es para detección de cambios entre re-renderizados, y realización de directivas estructurales, todas ellas operaciones internas, en general tiene una utilidad de solo lectura.
 - __isInitialized__: atributo ``booleano`` que hace un seguimiento a la inicialización del componente, este estatus se establece en ``true`` cuando es _instanciado_, y vuelve a ``false`` cuando es _des renderizado_, el ciclo de vida de los componentes se detallará más adelante.
 - __isFirstMount__: atributo ``booleano`` que hace un seguimiento a la primera renderización del componente, este estatus es ``true`` al renderizarse por primera vez y vuelve a ``false`` en los renderizados siguientes, sin embargo, regresa a ser ``true`` cuando se desrenderiza, más detalles en la explicación del ciclo de vida.
 - __isRendered__: atributo ``booleano`` que hace un seguimiento al renderizado en vigor del componente, la diferencia con _isInitialized_, es que este asegura que el componente se encuentra renderizado en cambio aquel no, de nuevo, estará algo más claro cuando detalle el ciclo de vida de un componente.
 - __key__: cadena de texto que identifica al componente y lo distinque de los demás.
-- __parent__: este atributo hace referencia al componente que funge como padre del presente componente, si por el contrario no hace parte de la familia de ningun otro, el atributo permanece en ``undefined``
-- __props__: atributo a través del cual el componente _padre_ puede comunicarse con el componente, este puede ser cualquier dato que quiera recibirse desde su invocación.
+- __parent__: este atributo hace referencia al componente que funge como padre del presente componente, si por el contrario, el componente no tiene padre alguno, como por ejemplo el componente raíz, el atributo permanece en ``undefined``
+- __props__: atributo a través del cual el componente _padre_ puede comunicarse, este puede ser cualquier dato que quiera recibirse desde su invocación.
 - __inputModel__: atributo opcional reservado para fines de control de formularios, más detalles en la sección de [formularios controlados](#formularios-controlados).
 - __childAttaching__: Este método indexa todos los hijos potenciales del componente, estos son todos los nodos que han sido declarados en el módulo al que pertenece el presente componente. 
 Este atributo tiene un propósito de uso interno, no hace falta manipularle, ya que está diseñado para operar en un contexto específico.
 
 ### __Métodos__
-Ahora pasamos a los métodos, la clase __MyComponent__ sin contar el método constructor, posee __10__ métodos púbicos puestos a nuestra disposición para realizar diversas funciones, de estos 10, __cuatro 4__ están destinados a ser sobrescritos, __dos 2__ de los 10 son _obligatorios_ si queremos un mínimo para la adecuada funcionalidad del componente y como último detalle __dos 2__ de los 10 no están destinados a uso regular, son propiamente utilizados por la lógica interna del framework, sin embargo, conviene conocerlos. 
+Ahora pasamos a los métodos, la clase __MyComponent__ sin contar el método constructor, posee __10__ métodos púbicos puestos a nuestra disposición para realizar diversas funciones, de estos 10, __cuatro (4)__ están destinados a ser sobrescritos; __dos (2)__ de los 10 son _obligatorios_ si queremos un mínimo para la adecuada funcionalidad del componente, y como último detalle __dos (2)__ de los 10 no están destinados a uso regular, son propiamente utilizados por la lógica interna del framework, sin embargo, conviene conocerlos. 
 
 clasificados son los siguientes: 
 #### __Constructor__
-- __constructor(svc?: any)__: el método constructor recibe como parámetros un objeto opcional, este puede contener todos los servicios declarados en el módulo, en caso contrario estará vacio, la ide central es poder recibir por injección un servicio compartido entre nodos del mismo nodo en el cual sea provisto. al ser este un parámetro opcional, los componentes hijos no están obligados a pasarlo por la función __super()__ durante herencia, simplemente pueden asignarlo y usarlo a conveniencia, ejemplo:
+- __constructor(svc?: any)__: el método constructor recibe como parámetros un objeto opcional, este puede contener todos los servicios declarados en el módulo, en caso contrario estará vacio, la idea central es poder recibir por injección un servicio compartido entre nodos del mismo modulo en el cual sea provisto. al ser este un parámetro opcional, los componentes hijos no están obligados a pasarlo por la función __super()__ durante herencia, simplemente pueden asignarlo y usarlo a conveniencia, ejemplo:
   ~~~typescript
+  @MyNode({selector: 'my-app'})
   class AppComponent extends MyComponent{
     service: SomeServie;
 
@@ -138,17 +176,98 @@ clasificados son los siguientes:
     children: (key: string)=> (dataBuilder: DataBuilderT)=>string;
   }
   ~~~
-  Básicamente es un recuento de todas los manejadores y directivas del template, estos serán detallados más adelante, más sin embargo, ya en el ejemplo del contador se pudo ver una muestra del atributo ``_.on()``.
+  Básicamente es un recuento de todas los manejadores y directivas del template, más sin embargo, ya en el ejemplo del contador se pudo ver una muestra del atributo ``_.on()``.
+  - ``Directivas``: La directivas del template son funciones especualizadas para tareas muy específicas, entre estas tenemos:
+      - __on:__ esta directiva se encarga de añadir controladores de eventos en línea, ya vimos su uso en ejemplos anteriores, más detalles en la sección [eventos en línea](#eventos-en-línea);
+      - __inputController:__ directiva encarga de añadir controladores especializados en el control de campos de texto, es decir, etiquetas ``input`` o ``textarea``, más detalles y ejemplos de uso en la sección [formularios controlados](#formularios-controlados).
+      - __myIf:__ directiva estructural especializada en renderizado condicional de nodos puros, un nodo puro es un nodo html que en su sintaxis no envuelve ningún componente, un ejemplo: 
+
+        ~~~Typescript
+        template(()=>`
+          <main>
+            <div>
+              ${/*nodo puro*/}
+              <h2>lorem ipsum</h2>
+            </div>
+              ${/*nodo inpuro*/}
+            <section>
+              ${_.child('my-component')()}
+            </section>
+          </main>
+        `)
+        ~~~
+        
+        En el presente ejemplo podemos diferenciar lo que es un nod puro de uno inpuro, además de anticipar lo que es el __acoplamiento de componentes hijo__ en el template, pero esto lo trataremos más adelante. Una posible aplicación de esta directiva sería la siguiente:
+        ~~~typescript
+          num: number = 0;
+          template(()=>`
+          <main>
+            <div>
+              <h2 ${_.myIf(this.num > 3)}>lorem ipsum</h2>
+            </div>
+            <section>
+              ${_.child('my-component')()}
+            </section>
+          </main>
+        `)
+        ~~~
+        En este ejemplo vemos que las directivas estructurales deben interpolarse denro de la etiqueta como uno de sus atributos, en este caso particular la etiqueta "h2" no se renderizará a menos que la propiedad __num__ sea mayor a __3__.
+      - __myMul:__ directiva estructural encargada de multiplicar el nodo al cual se encuentre afectando, el funcionamiento de esta directiva consiste en recibir como parámetro un numero entero positivo y multiplicar por ese número la cantidad de instancias de el nodo en cuestion en sea ubicación, este cambio sera reflejado en HTML resultante un ejemplo de una posible aplicación:
+
+        ~~~typescript
+          //declaración
+          num: number = 3;
+          template(()=>`
+            <main>
+              <div>
+                <h2 ${_.myMul(this.num)}>lorem ipsum</h2>
+              </div>
+              <section>
+                ${_.child('my-component')()}
+              </section>
+            </main>
+          `)
+        //resultado
+        ~~~
+        ~~~html
+        <!-- resultado -->
+        <main>
+          <div>
+            <h2>lorem ipsum</h2>
+            <h2>lorem ipsum</h2>
+            <h2>lorem ipsum</h2>
+          </div>
+          <section>
+            <!-- my component -->
+          </section>
+        </main>
+        ~~~
+      - __child:__ directiva especial dedicada al acoplamiento de componentes hijos individuales, es decir, a través de esta directiva podemos acoplar un componente hijo en el template, con esta directiva podemos inyectar props, atributos de renderizado condicional y keys de diferenciación, pudimos ver su sintaxis en ejemplos anteriores, más detalles en la sección [acoplamiento de componentes hijos](#acoplamiento-de-componentes-hijos).
+      - __children:__ directiva especial dedicada al acoplamiento de componentes hijos por lotes, es decir, a través de esta directiva podemos acoplar un componente hijo en el template, con esta directiva podemos inyectar props, atributos de renderizado condicional y keys de diferenciación utilizado un builder, más detalles en la sección [acoplamiento de componentes hijos](#acoplamiento-de-componentes-hijos).
 
 #### __Opcionales__
 - __(para sobreescritura) init()__: método destinado a ser sobre escrito, no tiene parámetros, esté metodo se ejecuta automáticamente al inicializar el componente y no vuelve a ejecutarse hasta que el componente sea desrenderizado y en un eventual futuro vuelto a inicializar, lo cual es distinito de un re renderizado, este comportamiento lo hace idóneo para tareas de una sola ejecución como subscripciones a globalStore o peticiones a un servidor remoto.
-- __(para sobreescritura) ready()__:  método destinado a ser sobre escrito, no tiene parámetros, este método se ejecuta automáticamente cada vés que el componente se renderiza, incluyendo los re renderizados, es decir, su función es proveer un espacio para ejecutar lógica cuando el componente se encuentra en el _DOM_, esto es útil para la lógica interesada en manipular el DOM, aunque también puede usarse en cojunto al atributo __$__, para un manejo complejo de ``ciclo de vida``.
+- __(para sobreescritura) ready()__:  método destinado a ser sobre escrito, no tiene parámetros, este método se ejecuta automáticamente cada vés que el componente se renderiza, incluyendo los re renderizados, es decir, su función es proveer un espacio para ejecutar lógica cuando el componente se encuentra en el _DOM_, esto es útil para la lógica interesada en manipular el DOM, aunque también puede usarse en cojunto al atributo __$__, para un manejo complejo del ``ciclo de vida``.
 - __(para sobreescritura) destroy()__:  método destinado a ser sobre escrito, no tiene parámetros, este método se ejecuta automáticamente cada vés que el componente se des-renderiza, es decir, su función es proveer un espacio para ejecutar lógica cuando el componente es removido del árbol principal, esto es útil para la lógica interesada en desubscripciones y semejantes.
-- __refresh(callback?)__: método encargado de actualizar la vista, en otras palabras, es el equivalente a un _setState()_, pero no funciona como ``React.js``, en su lugar funciona como ``Flutter``, ejecuta una serie de operaciones en busca de un cambio en la vista en caso de aberlo realiza el ``refrescado``. El método tiene como parámetros una función ``callback`` donde podremos ejecutar lógica previa a la actualización de la vista, este sistema es un simil del ``setState()`` de flutter, su propósito es simplemente una ayuda visual para ejecutar la lógica que modiffique la vista antes del refresh, por ello basta con invocar el método despues de realizar las modificaciónes sin necesidad de pasarle ese callback.
+- __refresh(callback?)__: método encargado de actualizar la vista, en otras palabras, es el equivalente a un _setState()_, pero no funciona como ``React.js``, en su lugar funciona como ``Flutter``, ejecuta una serie de operaciones en busca de un cambio en la vista en caso de aberlo realiza el ``refrescado``. El método tiene como parámetros una función ``callback`` donde podremos ejecutar lógica previa a la actualización de la vista, este sistema es un simil del ``setState()`` de flutter, su propósito es simplemente una ayuda visual para ejecutar la lógica que modiffique la vista antes del refresh, por ello basta con invocar el método despues de realizar las modificaciónes sin necesidad de pasarle ese callback, hemos visto su aplicación en ejemplos anteriores:
+  ~~~typescript
+    this.refresh(()=>{  
+      this.count++;
+    });
+    //es quivalente a:
+    this.count++;
+    this.refresh();
+  ~~~
+  la idea central es realizar el __refresh__ luego de modificar alguna dependencia de la vista, la anidación de la lógica en el callback es una ayuda visual y nada más.
 
 #### __De lógica interna__
 - __render()__: método encargado de renderizar el componente, notificando la montura del mismo.
 - __(asíncrono) clear()__: método encargado de "limpiar" el componente del árbol, esto implica removerlo de _MyDOM_, del árbol en sí y reestablecer todos los eventos y funciones asociadas al mismo. Es la forma que tiene my framework ts de liberar de la estructura principal un componente para dar espacio a los demás.
+
+
+## __Acoplamiento de Componentes hijos__
+Para garantizar un adecuado manejo del parentezco entre componentes my framework ts utiliza un sistema de attaching en el cual el acoplamiento de un componente a otro como su padre es mediado por un mecanismo especializado, para ello existe la directiva __child()__ en el método __template()__ que ya hemos podido visualizar en ejemplos anteriores, esta directiva recibe como parámetro una cadema de texto que hace referencia al selector del componente en cuenstion.
+
 
 ## __Ciclo de vida__
 El ciclo de vida de un componente tiene __cuatro__  estadios o estados, estos atienden a su invocación, montura, reactividad y desmonte:

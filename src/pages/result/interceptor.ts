@@ -6,8 +6,5 @@ export const IResultIn: InterceptorT = (path:string, args?: ArgsInterceptor): In
 
 
 export const IResultOut: InterceptorT = (path:string, args?: ArgsInterceptor): InterceptorReturn | void=>{
-  const choice = confirm('desea salir de la presente página?')
-  return {
-    cancel: !choice
-  }
+  console.log(path+'.....out',args);
 }

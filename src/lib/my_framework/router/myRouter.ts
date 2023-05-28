@@ -53,6 +53,11 @@ export class MyRouter {
 
     window.addEventListener('popstate',()=>{
       this.renderRoute();
+
+    });
+
+    window.addEventListener('beforeunload',(e)=>{
+      this.renderRoute();
     });
 
     window.addEventListener('DOMContentLoaded',()=>{
@@ -60,7 +65,7 @@ export class MyRouter {
     });
 
     MyRouter.instanceRouter = this;
-  }
+  }//end constructor
 
   /**
    * Método encargado de hallar la ruta coincidente y sus respectivos
@@ -103,7 +108,7 @@ export class MyRouter {
     }
   
     return null; // retornamos null porque no se encontró ninguna coincidencia de ruta
-  }
+  }//end matchRoute
   
   /**
    * Método encargado de renderizar el módulo correspondiente
@@ -131,6 +136,14 @@ export class MyRouter {
     }//end if
 
     const mathed = this.matchRoute(path);
+    // console.log({
+    //   path,
+    //   params: {
+    //     querys: MyRouter.queryParams(),
+    //     slugs: mathed?.paramsSlug
+    //   }
+    // });
+    
     
     let page
     if(mathed === null) {
@@ -158,8 +171,9 @@ export class MyRouter {
     MyCentralService.clearServices(); 
     const newPage = page ?? this.notFound;
     this.currentRouteS = path;
+    window.document.title = newPage.title;
     MyDOM.renderTree(newPage);
-  }
+  }//end renderRoute
 
   private interOut(): InterceptorReturn | void{
     const router = new MyRouter();
@@ -169,15 +183,15 @@ export class MyRouter {
         slugs: MyRouter.paramSlug(),
         querys: MyRouter.queryParams()
       }
-    }
+    }//end e
     return router.currentRoute.out(router.currentRouteS, e)
-  }
+  }//end interOut
 
   private interIn(path: string, params: any): InterceptorReturn | void{
     const router = new MyRouter();
     if(router.currentRoute?.in === undefined) return;
     return router.currentRoute.in(path, params)
-  }
+  }//end enterIn
 
   /**
    * Método encargado de navegar a otra página
@@ -188,21 +202,21 @@ export class MyRouter {
     const router = new MyRouter();
     window.history.pushState({path, discreet}, path, window.location.origin + path);
     router.renderRoute();
-  }
+  }//end go
   
   /**
    * Método que navegar hacia atrás en la navegación
    */
   static back(){
     window.history.back()
-  }
+  }//end back
 
   /**
    * Método que navegar hacia adelante en la navegación
    */
   static next(){
     window.history.forward();
-  }
+  }//end next
 
   /**
    * Método encargado de obtener los parámetros los params slug

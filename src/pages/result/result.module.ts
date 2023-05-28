@@ -3,6 +3,7 @@ import { ResultComponent } from "./result";
 
 @MyModule({
   key: 'result_module',
+  name: 'Resultado',
   rootNode: ResultComponent,
   nodes: []
 })

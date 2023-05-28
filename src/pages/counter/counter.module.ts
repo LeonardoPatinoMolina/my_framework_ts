@@ -6,6 +6,7 @@ import { CounterComponent } from "./counter";
 
 @MyModule({
   key: 'counter_module',
+  name: 'Contador',
   nodes: [ModalComponent, ColoresComponent],
   rootNode: CounterComponent,
   services: [HttpService],

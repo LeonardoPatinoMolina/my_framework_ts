@@ -2,10 +2,11 @@ import { MyComponent } from "../core/myComponent";
 
 export type MyModuleT = {
   key: string;
-  rootNode: typeof MyComponent,
-  nodes: typeof MyComponent[],
-  services?: any[],
-  modules?: any[]
+  rootNode: typeof MyComponent;
+  nodes: typeof MyComponent[];
+  name?: string;
+  services?: any[];
+  modules?: any[];
 }
 
 /**
@@ -13,7 +14,7 @@ export type MyModuleT = {
  * cada declaradión de componentes y también proveer servicios de interes,
  * incluso a traves del mismo se puede asociar otros módulos
  */
-export function MyModule({key, rootNode, nodes = [], services = [], modules}:MyModuleT){
+export function MyModule({key, rootNode, nodes = [], services = [], modules, name='title'}:MyModuleT){
   return function <T extends { new(...args: any[]): {} }>(constructor: T){
     /**
      * Espacio de mempria dedicado a la instancia de la clase decoradora, esto se debe a que el decorador "MyModule"
@@ -27,6 +28,7 @@ export function MyModule({key, rootNode, nodes = [], services = [], modules}:MyM
       modules?: any[];
       key!: string;
       
+      static title: string = name;
       constructor(...args: any){
         super(...args)
         if(!!instance){

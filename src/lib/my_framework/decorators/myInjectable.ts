@@ -2,22 +2,22 @@ import { MyCentralService } from "@my_framework/service/myCentralService";
 
 interface InjectableArgs{
   serviceName: string;
-  provideIn: string[] | 'all';
+  provideIn?: string[] | 'all';
 }
 
 
-export function MyInjectable(iArgs: InjectableArgs){
+export function MyInjectable({serviceName, provideIn = 'all'}: InjectableArgs){
   return function <T extends {new (...args: any[]): {}}>(constructor: T){
     return class extends constructor{
       constructor(...args: any[]){
         super(...args)
-        if(MyCentralService.isInCentral(iArgs.serviceName)){
-          return MyCentralService.getService(iArgs.serviceName);
+        if(MyCentralService.isInCentral(serviceName)){
+          return MyCentralService.getService(serviceName);
         }
-        MyCentralService.setService(iArgs.serviceName, this);
+        MyCentralService.setService(serviceName, this);
       }
-      static provideIn: string[] | 'all' = iArgs.provideIn;
-      static serviceName: string = iArgs.serviceName;
+      static provideIn: string[] | 'all' = provideIn;
+      static serviceName: string = serviceName;
     }
   }
 }
