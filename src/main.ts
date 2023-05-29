@@ -8,5 +8,5 @@ MyDOM.setGlobalStore(store);
 MyDOM.createRoot(document.getElementById('root'));
 
 new MyRouter({
-  routes: ROUTES
+  routes: ROUTES,
 })

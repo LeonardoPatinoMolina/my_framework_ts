@@ -63,12 +63,78 @@ El fichero con esta sintaxis inicial es el que debe ser referenciado en nuestra 
 ## __Módulos__
 Los módulos son ``representaciones de grupo``, con ellos podemos construir árboles de componentes, injectar __servicios comunes__ y establecer un sistema de parentezco más confiable que en el anterior sistema de árboles sin módulo de __my framework__, esto nos agrega una capa más a la composisción permitiendo granularizar aún más el diseño, mejorar la experiencia de desarrollo, la escalabilidad y capacidad de reutilización.
 
-en proceso...
+Para la declaración de un nuevo módulo se requiere el uso del decorador __MyModule__, este recive como parámetro __tres (3)__ atributos obliatorios y __tres (3)__ opcionales:
+
+- __key__(obligatorio): Consiste en una cadena de texto que lo distinque de los demás módulos, este atributo es necesario para uso interno de my framework ts.
+- __rootNode__(obligatorio): se trata del componente que será el pivote sobre el cual se construye el árbol de componentes, este se concidera el componente raíz del módulo.
+- __nodes__(obligatorio): consiste en un arreglo de componentes, siempre que se desee acoplar un componente en el template de otro comonente debe estar seguro que se encuentra declarado como nodo del módulo, para ello debe ser añadido dentro de este arreglo. Si un módulo está compuesto por un solo componente este atributo puede ser un arreglo vacio.
+- __name__(opcional): por defecto, todos los módulos pueden renderizarse como una página de la aplicación, en este sentido este atributo es una cadena de texto que será añadida en el ``document.title`` siempre que este sea el módulo enrutado, en caso de no declararse, el texo será por defecto "title"
+- __services__(opcional): consiste en un arreglo de clases de servicio, estos son los servicios que serán eventualmente injectados por el constructor de los componentes nodo del módulo, más detalles sobre servicios en la sección [servicios](#)
+- __modules__(opcional): consiste en un arreglo de módulos, este atributo reune todos los módulos que participan de la composición de este módulo en concreto. En el momento en que se declara un módulo dentro de este atributo, el componente raíz del mismo estará disponible para ser acoplado en el template de los componentes nodo asociados al módulo principal, de esta forma podemos no solo componer una página con componentes, sino tambien con módulos como ya veremos acontinuación.
+
+### __Composición modular__
+A continuación un ejemplo de un 
+
+  ~~~Typescript
+import { MyModule } from "@my_framework_ts/decorators/myModule";
+import {Component1, Component2} from './components/components';
+import {AppComponent} from './app'
+
+@MyModule({
+  key: 'my-module',
+  name: 'My App',
+  nodes: [Component1, Component2],
+  modules: [SomeModule],
+  rootNode: AppComponent
+})
+export class MyAppModule{}
+~~~
+
+Esta declaración implica la existencia de dos componentes participantes y un módulo de nombre "SomeModule" destinados a acoplar su raíz en el módulo principal "MyAppModule". 
+
+  <figure align="center">
+    <img 
+      src="public/assets/figures/comp_mod_tree.png" 
+      width="300px" height="auto" alt="my framework logo" 
+      title="my framework logo"
+    >
+  </figure>
+ 
+  En esta ilustración podemos observar la composición general de una página de __my framework ts__, todo parte de un componente raíz perteneciente a un módulo principal y de allí se extiende una ramificación de la cual pueden participal otros módulos, pudiendo acoplarse al cuerpo del árbol del módulo padre con su nodo raíz, el segundo módulo a su véz podrá tener otros módulos componiéndole de ser necesario.
+
+  Ambos árboles de componentes allí ilustrados pueden ser renderizados individualmente si así se desea, ya que cada uno representa una unidad autosuficiente.
+
+  ### __Servicios en módulos__
+
+  ~~~Typescript
+    import { MyModule } from "@my_framework_ts/ decoratorsmyModule";
+    import {Component1, Component2} from './componentscomponents';
+    import {SomeService} from './services/SomeService'
+    import {AppComponent} from './app'
+    @MyModule({
+      key: 'my-module',
+      name: 'My App',
+      services: [SomeServices],
+      nodes: [Component1, Component2],
+      nodes: [],
+      rootNode: AppComponent
+    })
+    export class MyAppModule{}
+  ~~~
+
+  Luego de declarado en el atributo services, el servicio será preveído a través del contructor de cada componente participante, los servicios solo estarán disponibles para el árbol de componentes del módulo donde fueron declarados. 
+  
+  En la siguiente ilustración identificamos los servicios con los pequeños circulos azules de distinto tono, vemos dos árboles de componentes cada uno teniendo a su disposición el servicio declarado en su respectivo módulo. Los servicios en módulos son exclusivos para sus componentes nodos, esto significa que, si un modulo hace parte de la estructura de otro, tal y como se ilustra acontinuación, este no tendrá acceso al sericio declarado en su padre, si así lo desea necesitará declararlo en su decorador con el atributo __services__, de igual forma este podrá tener los servicios que requiera y estarán desponible en cada componente árticipante de su árbol.
+
+  <figure align="center">
+    <img src="public/assets/figures/comp_mod_serv_tree.png" width="300px" height="auto" alt="my framework logo" title="my framework logo">
+  </figure>
 
 <hr>
 
 ## __Componentes__
 Los componentes son fragmentos o maquetas que nos permiten componer las vistas de forma modular, cada uno de ellos se responsabiliza de su diseño y lógica intrínseca, de esta forma podemos modularizar nuestro código haciendo más amena la experiencia de desarrollo, ``en my framework ts`` estos se basan en plantillas literales que siguen ciertas reglas para poder transformarse en código html entendible para el navegador, poseen la siguiente sintaxis:
+
 ~~~Typescript
 //src/components/counter.ts
 import { MyComponent } from "@my_framework/component";
@@ -109,6 +175,72 @@ Inmediatamente se puede apreciar que se trata de un __componente de clase__, efe
  El componente __CounterComponent__ está heredando de la clase __MyComponent__, de la acual obtiene todos los métodos propios de un componente reactivo, pero advertimos una diferencia respecto a my framework: adicionalmente la clase está siendo decorada con el decorador de fabrica __@MyNode()__ este recibe obligatoriamente un objeto como parámetro con el atributo obligatorio __selector__.
 
 En este caso tenemos un clásico contador, gracias a este ejemplo tan típico tengo espacio para mostrar rápidamente la existencia del método __refresh()__, este es el método utilizado por el componente para invocar sus re-renderizados.
+
+## __Decorador MyNode__
+El decorador MyNode es indispensable para la adecuada declaración de un componente en __my framework ts__, a diferencia de [My framework](https://github.com/LeonardoPatinoMolina/my-framework), donde bastaba con heredar de la clase __MyComponent__. 
+Este decorador recibe como parámetro __un (1)__ atributo obligatorio y __uno (1)__ opcional:
+
+- __selector__(obligatorio): consiste en una cadena de texto que servirá para referenciar la clase del componente en el template donde se realizará el acople, es decir, cada vez que se requiera añadir un componente a la composición, será referenciado con la cadena de texto que se ingresó en este atributo.
+- __styles__(opcional): este atributo es especial, recibe una cadena de texto que contenga codigo __CSS__ puro, tu trabajo es añadir dichos estilos solo cuando el componente se renderice, los estilos que sean declarados en este atributo solo estarán disponibles en la aplicación durante el ciclo de vida del componente, su propósito es hacer aún más reutilizables los componentes prescindiendo de una hoja de estilo explicicta. Un ejemplo rapido es el componente utilizado internamente por __my framewrok para rutas desconocidas en el enrutador:
+
+  ~~~typescript
+  import { MyComponent } from "@my_framework/core/myComponent";
+  import { MyNode } from "@my_framework/decorators/myNode";
+  import { MyRouter } from "@my_framework/router/myRouter";
+
+  @MyNode({selector: 'not-found', styles: (`
+    .not-found-template-00{
+      background-color: #222;
+      width: 100%;
+      height: 100vh;
+      color: #f1f2f3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .not-found-template-00__btn:hover{
+      background-color: #aaa;
+    }
+    .not-found-template-00__btn{
+      font-family: Century Gothic, system-ui, Avenir, Helvetica, Arial, sans-serif;
+      margin-top: 1rem; 
+      border-radius: 1rem;
+      padding: 1rem;
+      font-size: 1rem;
+    }
+    
+    .not-found-template-00__card{
+      font-family: Century Gothic, system-ui, Avenir, Helvetica, Arial, sans-serif;
+      border-radius: 1rem;
+      padding: 1rem;
+      outline: 2px solid #f1f2f3;
+    }
+    .not-found-template-00__card__title{
+      font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;;
+      text-align: center;
+      color: #f1f2f3;
+      font-weight: bold;
+    }
+    .not-found-template-00__card__paragraph{
+      background-color: green;
+    }
+  `)})
+  export class _404Component extends MyComponent{
+    build(): string {
+      return this.template((_)=>`
+        <main class="not-found-template-00">
+          <div class="not-found-template-00__card">
+            <h1 class="not-found-template-00__card__title"> 404</h1>
+            <p class="not-found-template-00__card__paragrah">Page not found</p>
+          </div>
+          <button class="not-found-template-00__btn ${_.on('click',()=>MyRouter.go('/'))}>Come back to home</button>
+        </main>
+      `);
+    }
+  }
+  ~~~
+
+    >Nota: Este ejemplo posee otros aspectos importantes que serán tratados más adelante
 
 ### __MyComponent__
 La clase cuenta con __ocho (8)__ atributos públicos y unos __4 cuatro 4__ getters que tendremos a nuestra disposición para diversas operaciones, estos son los siguientes:

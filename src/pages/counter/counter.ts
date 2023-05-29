@@ -45,11 +45,12 @@ export class CounterComponent extends MyComponent {
       <p align="center">
       <img 
         class="image" 
-        src="https://i.postimg.cc/RhrgmkP4/logo-myframework-ts-big.png" 
         width="auto" 
         height="200px" 
+        src="https://i.postimg.cc/RhrgmkP4/logo-myframework-ts-big.png" 
         alt="my framework logo" 
         title="my framework logo"
+        draggable="false"
       >
       </p>
       <p class="number">${this.count} <span>+ 10</span></p>
@@ -75,8 +76,6 @@ export class CounterComponent extends MyComponent {
 }
 
 
-
-// ${_.on('click', ()=>{MyRouter.go<number>(`/result`,{params: [this.count + 10, this.count]})})}
 
 
 

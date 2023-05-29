@@ -1,7 +1,7 @@
 import { MyDOM } from "../core/myDOM.ts";
 import { MyCentralService } from "../service/myCentralService.ts";
 import { _404Module } from "../template/404/404.module.ts";
-import { InterceptorReturn, MatchRouteI, RoutesI } from "./types/myRouter.types.ts";
+import { MatchRouteI, RoutesI } from "./types/myRouter.types.ts";
 
 export class MyRouter {
   static instanceRouter: MyRouter;
@@ -16,7 +16,16 @@ export class MyRouter {
    * Ruta actualmente en función
    */
   private currentRoute?: RoutesI;
-  private currentRouteS!: string;
+
+  /**
+   * Rutas de páginas visitadas, el indice "0" es la página anterior, el indice "1" es la página actual
+   */
+  private pathVisited: string[] = ['/','/'];
+  
+  /**
+   * Datos discretos de páginas visitadas, el indice "0" es la página anterior, el indice "1" es la página actual
+   */
+  private discreetVisited: any[] = [undefined,undefined];
 
   /**
    * Página que se encuentra actualmente renderizada, corresponde al
@@ -24,18 +33,12 @@ export class MyRouter {
    */
   currentPage: any;
 
-
   /**
    * Params tipo slug de la página que se encuentra renderizada
    * corresponde a un objeto con el nombre del param declarado en la ruta
    * como key y el valor que le acompaña en la url
    */
   currentParamsSlug: any;
-
-  /**
-   * Datos discretos de la página que se encuentra renderizada
-   */
-  currentDiscreet: any; 
   
   /**
    * Rutas con los params y con las páginas dispuestas al enrutamiento, estas corresponden a 
@@ -51,12 +54,7 @@ export class MyRouter {
     this.routes = args?.routes;
     this.notFound = args?.notFound ?? _404Module;
 
-    window.addEventListener('popstate',()=>{
-      this.renderRoute();
-
-    });
-
-    window.addEventListener('beforeunload',(e)=>{
+    window.addEventListener('popstate',(e)=>{
       this.renderRoute();
     });
 
@@ -112,85 +110,112 @@ export class MyRouter {
   
   /**
    * Método encargado de renderizar el módulo correspondiente
-   * a la ruta ingresada
+   * a la ruta ingresada mientras verifica la existencia de interceptores
    */
-  private renderRoute(){
-    const path = window.location.pathname;
-    //almacenamos un posible dato discreto
-    const hState = history.state;
-    this.currentDiscreet = hState?.discreet;
-    
-    if(!!this.currentRoute){
-      const interOutResponse = this.interOut()
-      if(interOutResponse) {
-        if(interOutResponse.cancel) {
-          MyRouter.back();
-          return;
-        }//end if
-        if(interOutResponse.redirect){
-          this.currentRoute = undefined;
-          MyRouter.go(interOutResponse.redirect);
-          return;
-        }//end if
-      }//end if
-    }//end if
+  private async renderRoute(){
+    const path = window.location.pathname; //ruta actual
+    const mathed = this.matchRoute(path); //buscamos las coincidenciar entre las rutas declaradas
+    const hState = history.state; //almacenamos el estado del historial en una constante
 
-    const mathed = this.matchRoute(path);
-    // console.log({
-    //   path,
-    //   params: {
-    //     querys: MyRouter.queryParams(),
-    //     slugs: mathed?.paramsSlug
-    //   }
-    // });
+    //actualizamos las páginas visitadas recientemente
+    this.pathVisited.push(path);
+    this.pathVisited.shift();
+
+    //actualizamos el los datos discretos de las páginas visitadas recientemente
+    this.discreetVisited.push(hState?.discreet);
+    this.discreetVisited.shift();
     
+    //si existe una ruta actualmente referenciada, verificar si existe un interceptor out
+    if(!!this.currentRoute){
+      const interOutResponse = await this.interOut();
+      if(interOutResponse) return; //salimos de la función, esto debido al retorno del interceptor out
+    }//end if
     
-    let page
-    if(mathed === null) {
+    let page; // varibale auxiliar para almacenar la página final
+    if(mathed === null) {//si no existe match estamos frente a una ruta desconocida
       page =  this.notFound;
-      this.currentParamsSlug = undefined
+      //vaciamos de la memoria los parametros slug
+      this.currentParamsSlug = undefined;
     }else {
       this.currentRoute = mathed.route;
-      const interInResponse = this.interIn(path, {params: {slugs: mathed.paramsSlug, querys: MyRouter.queryParams()}})
-      if(interInResponse) {
-        if(interInResponse.cancel) {
-          MyRouter.back();
-          return;
-        };
-        if(interInResponse.redirect){
-          this.currentRoute = undefined;
-          MyRouter.go(interInResponse.redirect);
-          return;
-        }
-      }
+      const interInResponse = await this.interIn();
+      if(interInResponse) return;//salimos de la función, esto debido al retorno del interceptor out
+
       page = mathed.route.modulePage;
       this.currentParamsSlug = mathed.paramsSlug;
     }
     
+    //limpiamos el árbol de componentes y los servicios
     MyDOM.clearDOM();
-    MyCentralService.clearServices(); 
-    const newPage = page ?? this.notFound;
-    this.currentRouteS = path;
-    window.document.title = newPage.title;
-    MyDOM.renderTree(newPage);
+    MyCentralService.clearServices();
+    window.document.title = page.title;
+    MyDOM.renderTree(page);
   }//end renderRoute
 
-  private interOut(): InterceptorReturn | void{
+   /**
+  * Método encargado de ejecutar el interceptor "out" de salida de ruta
+  * @returns - retorna una promesa la cuyalva resuelve "true" si el interceptor ejecutó una operación importante, 
+  * ya sea redirección o cancelación de cambio de ruta y "false" si el interceptor 
+  * no le afecto significativamente
+  */
+  private async interOut(): Promise<boolean>{
     const router = new MyRouter();
-    if(!router.currentRoute?.out) return;
+    if(!router.currentRoute?.out) return false;
     const e = {
+      discreet: router.discreetVisited[0],
       params: {
         slugs: MyRouter.paramSlug(),
         querys: MyRouter.queryParams()
       }
     }//end e
-    return router.currentRoute.out(router.currentRouteS, e)
+    const interOutResponse = await router.currentRoute.out(router.pathVisited[0], e);
+
+    if(!interOutResponse) return false; 
+    if(interOutResponse.cancel) {//verificar si el interceptor canceló el cambio de ruta
+      //la razón detrás de declarar undefined esta propiedad es para garantizar que
+      //el interceptor out solo será ejecutado esta ocación
+      this.currentRoute = undefined;
+      MyRouter.go(this.pathVisited[0], this.discreetVisited[0]);
+      return true;
+    }//end if
+    if(interOutResponse.redirect){//verificar si el interceptor demanda una redirección de ruta
+      //la razón detrás de declarar undefined esta propiedad es para garantizar que
+      //el interceptor out solo será ejecutado esta ocación
+      this.currentRoute = undefined;
+      MyRouter.go(interOutResponse.redirect.path, interOutResponse.redirect?.discreet);
+      return true;
+    }//end if
+    return false;
   }//end interOut
 
-  private interIn(path: string, params: any): InterceptorReturn | void{
+   /**
+  * Método encargado de ejecutar el interceptor "in" de entrada a ruta
+  * @returns - retorna una promesa la cuyalva resuelve "true" si el interceptor ejecutó una operación importante, 
+  * ya sea redirección o cancelación de cambio de ruta y "false" si el interceptor 
+  * no le afecto significativamente
+  */
+  private async interIn(): Promise<boolean>{
     const router = new MyRouter();
-    if(router.currentRoute?.in === undefined) return;
-    return router.currentRoute.in(path, params)
+    if(router.currentRoute?.in === undefined) return false;
+    const e = {
+      discreet: router.discreetVisited[1],
+      params: {
+        slugs: MyRouter.paramSlug(),
+        querys: MyRouter.queryParams()
+      }
+    }//end e
+    const interInResponse = await router.currentRoute.in(router.pathVisited[1], e);
+    if(!interInResponse) return false;
+      if(interInResponse.cancel) {
+        MyRouter.go(this.pathVisited[0], this.discreetVisited[0]);
+        return false;
+      };
+      if(interInResponse.redirect){
+        this.currentRoute = undefined;
+        MyRouter.redirect(interInResponse.redirect.path, interInResponse.redirect.discreet);
+        return false;
+      }
+    return false
   }//end enterIn
 
   /**
@@ -201,6 +226,17 @@ export class MyRouter {
   static go<T = any>(path: string, discreet?: T): void{
     const router = new MyRouter();
     window.history.pushState({path, discreet}, path, window.location.origin + path);
+    router.renderRoute();
+  }//end go
+
+  /**
+   * Método encargado de navegar a otra página
+   * @param path - Ruta válida obetivo
+   * @param discreet - Datos discretos para comunicar entre páginas
+   */
+  static redirect<T = any>(path: string, discreet?: T): void{
+    const router = new MyRouter();
+    window.history.replaceState({path, discreet}, path, window.location.origin + path);
     router.renderRoute();
   }//end go
   
@@ -230,9 +266,9 @@ export class MyRouter {
   /**
    * Método encargado de obtener los datos discretos de la página actual
    */
-  static disgreetData<T = any>(): T | undefined{
+  static discreetData<T = any>(): T | undefined{
     const router = new MyRouter();
-    return router.currentDiscreet;
+    return router.discreetVisited[1];
   }//end discreetData
   
   /**

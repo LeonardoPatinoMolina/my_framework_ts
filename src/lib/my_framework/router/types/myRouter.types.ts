@@ -17,10 +17,10 @@ export interface MatchRouteI<T = any>{
   paramsSlug: T
 }
 
-export type InterceptorT = (path: string, args: ArgsInterceptor)=>InterceptorReturn|void;
+export type InterceptorT = (path: string, args: ArgsInterceptor)=> Promise<InterceptorReturn|void>;
 
 export interface InterceptorReturn {
-  redirect?: string;
+  redirect?: {path: string, discreet?: any};
   cancel?: boolean;
 }
 

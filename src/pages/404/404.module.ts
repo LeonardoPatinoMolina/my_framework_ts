@@ -3,6 +3,7 @@ import { _404Component1 } from "./404";
 
 @MyModule({
   key: '404_module',
+  name: '404 de prueva',
   rootNode: _404Component1,
   nodes:[]
 })
