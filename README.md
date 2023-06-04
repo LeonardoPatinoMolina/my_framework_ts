@@ -111,6 +111,7 @@ Esta declaración implica la existencia de dos componentes participantes y un m�
     import {Component1, Component2} from './componentscomponents';
     import {SomeService} from './services/SomeService'
     import {AppComponent} from './app'
+
     @MyModule({
       key: 'my-module',
       name: 'My App',
@@ -398,13 +399,105 @@ clasificados son los siguientes:
 
 
 ## __Acoplamiento de Componentes hijos__
-Para garantizar un adecuado manejo del parentezco entre componentes my framework ts utiliza un sistema de attaching en el cual el acoplamiento de un componente a otro como su padre es mediado por un mecanismo especializado, para ello existe la directiva __child()__ en el método __template()__ que ya hemos podido visualizar en ejemplos anteriores, esta directiva recibe como parámetro una cadema de texto que hace referencia al selector del componente en cuenstion.
+Para garantizar un adecuado manejo del parentezco entre componentes my framework ts utiliza un sistema de attaching en el cual el acoplamiento de un componente a otro es mediado por un mecanismo especializado, para ello existe la directiva __child()__ en el método __template()__ que ya hemos podido visualizar en ejemplos anteriores, esta directiva recibe como parámetro una cadema de texto que hace referencia al selector del componente en cuenstion, pero para un mejor entendimiento hagamos el paso a paso:
 
+1. Antes de intentar acomplar un componente en el cuerpo de otro, debemos asegurarnos que estos comparten módulos, o que el compoente al que se acopla sea la raiz del módulo donde el objetivo está declarado:
+
+    ~~~typescript
+    @MyModule({
+      key: 'app_module',
+      name: 'app',
+      nodes: [ChildComponent1, ChildComponent2],
+      rootNode: AppComponent
+    })
+    export class AppModule{}
+    ~~~
+  
+    En estas condiciones ``ChildComponent1`` y ``ChildComponent2`` pueden acoplarse los unos a los otros o directamente en el nodo raíz del módulo (``AppComponent``), esto dibido que comparten el mismo módulo.
+
+2. Damos uso de la directiva ``child()`` en el template del componente que se desa sea el padre.
+
+  ~~~typescript
+  build(): void {
+    return this.template((_)=>`
+      <main>
+        <p>title</p>
+        ${_.child('my-child-1')}
+      </main>
+    `)
+  }
+  ~~~
+
+    En este paso decidimos en qué parte del template acoplaremos el componente e interpolamos la directiva __child()__ parando como parámetro el selector del componente en cuestión, en ste caso es ``my-child-1``, sin embargo, no hemos finalizado.
+
+3. La directiva __child()__ retorna una función que debe ejecutarse para acomplar satisfactoriamente en el lugar, esta función recibe como parámetro un objeto opcional, pero basta con simplemente invocarla para acoplar un componenete satisfactoriamente.
+
+    ~~~typescript
+    build(): void {
+      return this.template((_)=>`
+        <main>
+          <p>title</p>
+          ${_.child('my-child-1')()}
+        </main>
+      `)
+    }
+    ~~~
+
+Hay ciertas consideraciones importantes para que esta operación sea exitosa. 
+- Cuando un componente desea acomplarse más de una vez en el mismo template, debe poder distinguirse de los demás, para ello se emplea una key única, esta debe ser fija y no variar con el tiempo, se provee por el parámetro de la función retornada por la directiva __child()__, caso cotrario tendremos comportamientos inesperados. Sin ebargo puede mantenerse uno de ellos son una key explicita
+
+    ~~~typescript
+    build(): void {
+      return this.template((_)=>`
+        <main>
+          <p>title</p>
+          ${_.child('my-child-1')()}
+          ${_.child('my-child-1')({key: 'my-key-1'})}
+          ${_.child('my-child-1')({key: 'my-key-2'})}
+        </main>
+      `)
+    }
+    ~~~
+- si queremos comunicar información hacia el componente acoplado podemos emplear props, estas deben proeerse por un atributo del mismo nombre en el objeto pasado como parámetro de la función retornada por la directiva __child()__.
+  
+    ~~~typescript
+    data: any = 'data';
+
+    build(): void {
+      return this.template((_)=>`
+        <main>
+          <p>title</p>
+          ${_.child('my-child-1')({props: {data: this.data}})}
+        </main>
+      `)
+    }
+    ~~~
+
+### __Acoplamiento en lotes__
+En ocaciones querremos acoplar una más de un componente al tiempo, la cantidad de componentes a acoplar podría ser arbitrario y variar entre renderizados, a esto nos referimos con ``acomplamiento en lotes``, para ello tenemos la directiva __children()__, su uso es muy parecido a la directiva __child()__, pero en lugar de returnar una función que resibe como parámetro un objeto, esta recibe un arreglo de objetos. Cada objeto debe contener minimo un atriubuto key con la key única que distinguirá a cada componente acoplado.
+  ~~~typescript
+  data: any = 'data'
+  build(): void {
+    const builder = [
+      {key: 'kei-1'},
+      {key: 'kei-2', props: {data: this.data}},
+      {key: 'kei-3'},
+    ]
+    return this.template((_)=>`
+      <main>
+        <p>title</p>
+        ${_.children('my-child-1')(builder)}
+      </main>
+    `)
+  }
+  ~~~
+
+  En este ejemplo tenemos un arreglo con tres objetos cada uno con su key correspondiente y uno de ellos estaría recibiendo como props un objeto con el atributo ``data``, en efecto cada objeto corresponde a un componente acoplado, todos ellos pertenecientes al selector ``my-child-1``.
 
 ## __Ciclo de vida__
 El ciclo de vida de un componente tiene __cuatro__  estadios o estados, estos atienden a su invocación, montura, reactividad y desmonte:
 
-1. __inicialización__: es la etapa en la cual el componente es invocado ya sea como la raíz del árbol o en el template de su padre, en esta etapa conviene realizar las subscripciones e inicializaciones de propiedades de interés. LAs formas que podemos usar para asociar la ejecución de lógica a esta etapa son el método ``init()`` o el ``contructor`` mismo del componente. En el siguiente ejemplo vemos estas dos formas para hacer una consulta http:
+1. __inicialización__: es la etapa en la cual el componente es invocado ya sea como la raíz del árbol o en el template de su padre, en esta etapa conviene realizar las subscripciones e inicializaciones de propiedades de interés. Las formas que podemos usar para asociar la ejecución de lógica a esta etapa son el método ``init()`` o el ``contructor`` mismo del componente. En el siguiente ejemplo vemos estas dos formas para hacer una consulta http:
 
     ~~~typescript
     //constructor
@@ -515,7 +608,7 @@ veamos en el siguiente ejemplo donde lo implementamos para que imprima en consol
       },[this.saludo]);
     }
     ~~~
-  para notar el gran parecido con ``React.js`` veamos esto mismo, pero con sintaxis de react.js:
+    para notar el gran parecido con ``React.js`` veamos esto mismo, pero con sintaxis de react.js:
 
     ~~~Javascript
     //react.js
@@ -578,6 +671,7 @@ veamos en el siguiente ejemplo donde lo implementamos para que imprima en consol
     ~~~
 
     y a partir de allí seguirá imprimiendo "hola mundo" cuando cambie el estado saludo, mientras que "hola mundo 2" no volverá a ejecutarse hasta un nuevo renderizado.
+
 #### __De lógica interna__
 LifeComponent cataloga en dos categorías las funciones asociadas a efectos, aquellas que se ejecutan al renderizar el componente son efectos __update__, y aquellas que están destinadas a ejecutarse cuando el componente se desrenderice son efectos __dispose__, existen métodos encargados de propagarlos y son públicos, sin embargo, están asociados a la lógica interna de my framework ts no para uso regular:
 
@@ -639,13 +733,13 @@ Con la particularidad ser un manejador añadido a la etiqueta puntual en la que 
 <hr>
 
 ## __Formularios controlados__
-Este fue uno de los retos principales de my framework y en este caso my framework ts buscó mejorar la solución al mismo, repasemos __¿cuál es el problema a resolver?__.
+Este fue uno de los retos principales de my framework y en este caso my framework ts buscó mejorar la solución, repasemos __¿cuál es el problema a resolver?__.
 
 
 ### __El problema__
 ``My framework ts`` es una herramienta para desarrollar aplicaciones front-end de página única con componentes _reactivos_ cuya principal característica es que constantemente se re renderizan con la finalidad de actualizar la vista. 
 
-Imagine un usuario ingresando su información en un formulario de registro, el valor ingresado es un dato que pertenece al campo de texto que se encuentra renderizado en ese momento, pero antes de culminar su diligencia, el usuario decide hacer una pequeña acción en la vista que implica ``re-renderizar`` el árbol de componentes del cual participan los campos del formulario. Aquel dato previamente ingresado en el campo del formulario __no es persitente por definición__, solo el estado local del componente y el globalStore son los datos capaces de persisitir entre re-rederizados, __¿debemos hacer que el valor del campo sea un estado?__, pero por supuesto, __¿se solucionó el problema?__, lastimosamente no, o no exactamente.
+Imagine un usuario ingresando su información en un formulario de registro, el valor ingresado es un dato que pertenece al campo de texto que se encuentra renderizado en ese momento, pero antes de culminar su diligencia, el usuario decide hacer una pequeña acción en la vista que implica ``re-renderizar`` el árbol de componentes del cual participan los campos del formulario. Aquel dato previamente ingresado en el campo del formulario __NO es persitente por definición__, solo las propiedades del componente y el globalStore son los datos capaces de persisitir entre re-rederizados, __¿debemos hacer que el valor del campo sea uno de estos datos persistentes?__, pero por supuesto, __¿se solucionó el problema?__, lastimosamente no, o no exactamente.
 
 Esta situación acarrea una serie de problemas con arreglo a la experiencia del usuario en los campos de un formulario lo suficientemente elaborados (pérdida del foco, perdida de la ubicación del cursor y pérdida de datos ingresados) como para requerir una solución especializada. Si quería garantizar la correcta funcionalidad de los __formularios__ en my framework ts debía lidiar con estos asuntos.
 
@@ -654,7 +748,7 @@ Esta situación acarrea una serie de problemas con arreglo a la experiencia del 
 
 >``Nota:`` Me reservo los detalles internos de su implementación, tiene a su disposición el código empleado para ello.
 
-La forma solución empleada en ``my framework`` implicó resguardar los datos ingresados y el estado de foco del campo involucrado. Sin embargo, la forma en la que esto se efectuaba estaba pensado para re-renderizar el componente en cada manipulación que se realizara sobre los campos de los formularios. Como imaginará esto era muy costoso a nivel de recursos, pero funcional a fin de cuentas, esto era así debido al sisitema de reactividad empleado entonces, __my framework ts__ implementa un sistema de reactividad distinto, por ello se pudo permitir un manejo distinto de esta problemática.
+La forma solución empleada en ``my framework ts`` implicó resguardar los datos ingresados y el estado de foco del campo involucrado. Sin embargo, la forma en la que esto se efectuaba estaba pensado para re-renderizar el componente en cada manipulación que se realizara sobre los campos de los formularios. Como imaginará esto era muy costoso a nivel de recursos, pero funcional a fin de cuentas, esto era así debido al sisitema de reactividad empleado entonces por my framework, __my framework ts__ implementa un sistema de reactividad distinto, por ello se pudo permitir un manejo distinto de esta problemática.
 
 La sintaxis solo tuvo pequeños cambios respecto a my framework, pero la implementación interna es mucho más eficiente y sofísticada. Antes de recurrir a un ejemplo de my framework veamos cómo es un ``formulario controlado`` en una biblioteca de componentes reactivos como __React.js__:
 
@@ -705,6 +799,7 @@ export const Form ()=>{
   );
 }
 ~~~
+
 Aquí tenemos un rápido ejemplo de un componente funcional de __React.js__ de nombre __Form__ que consiste en un formulario con dos campos de texto que se encuetran controlados por un estado __formData__ con el valor inicial de "Roberto" y "Rodriguez" respectivamente, se observa el evento ``onChange`` y se maneja actualizándolo y mostrando siempre el valor ingresado en el atributo value de la etiqueta __input__, esto permite que podamos manipular el valor del campo a nuestro antojo. Esta es la forma en la que __React.js__ soluciona el problema que he mencionado respecto a la persistencia de los datos ingresados en el formulario, los demás detalles los soluciona de forma interna.
 
 Ahora veamos este mismo ejemplo, pero en un componente de my framework ts:
@@ -827,16 +922,6 @@ Los criterios a los que se rige la reconciliación están clasificados en 3:
 - __Cualitativos__: Son todas aquellas discrepancias donde un nodo presenta una diferencia en sus atributos o aspecto general, un ejemplo puede ser que un nodo posea un atributos con un valores distintos o, la ausencia o presencia de algunos atributos. Otro aspecto comparado es el tipo de nodo, un ejemplo sería que uno de ellos fuese un "div" y el otro un "span". 
 - __Cuantitativos__: 
 - __Estructurales__: 
-
-
-
-
-
-
-
-
-
-
 
 
 
