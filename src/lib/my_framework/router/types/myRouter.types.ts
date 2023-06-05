@@ -31,11 +31,3 @@ export type ArgsInterceptor = {
 export interface InterceptorI {
   request<T=any>(request: T): T;
 }
-
-export interface RouterTaskArgsI{
-  path: string;
-  discreet: any;
-  params: {slugs: any, querys: any}
-}
-
-export type RouterTaskT = (args: RouterTaskArgsI)=>RouterTaskArgsI

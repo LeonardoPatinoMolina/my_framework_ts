@@ -28,30 +28,24 @@ export class MyRouter {
   private discreetVisited: any[] = [undefined,undefined];
 
   /**
-   * Página que se encuentra actualmente renderizada, corresponde al
-   * module actual
-   */
-  currentPage: any;
-
-  /**
    * Params tipo slug de la página que se encuentra renderizada
    * corresponde a un objeto con el nombre del param declarado en la ruta
    * como key y el valor que le acompaña en la url
    */
-  currentParamsSlug: any;
+  private currentParamsSlug: any;
   
   /**
    * Rutas con los params y con las páginas dispuestas al enrutamiento, estas corresponden a 
    * los módulos designados como páginas a renderizar
    */
-  routes!: any;
+  private routes!: RoutesI[];
 
   constructor(args?: {routes: RoutesI[], notFound?: any}){
     if(!!MyRouter.instanceRouter){
       return MyRouter.instanceRouter;
     }
 
-    this.routes = args?.routes;
+    this.routes = args!.routes;
     this.notFound = args?.notFound ?? _404Module;
 
     window.addEventListener('popstate',(e)=>{
@@ -69,7 +63,7 @@ export class MyRouter {
    * Método encargado de hallar la ruta coincidente y sus respectivos
    * slugPrams si los hay
    */
-  matchRoute(url: string): MatchRouteI | null {
+  private matchRoute(url: string): MatchRouteI | null {
     const routes = this.routes;
     
     for (const route of routes) {
@@ -238,7 +232,7 @@ export class MyRouter {
     const router = new MyRouter();
     window.history.replaceState({path, discreet}, path, window.location.origin + path);
     router.renderRoute();
-  }//end go
+  }//end redirect
   
   /**
    * Método que navegar hacia atrás en la navegación

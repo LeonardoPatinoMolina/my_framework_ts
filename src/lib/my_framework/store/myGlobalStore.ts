@@ -8,11 +8,11 @@ export class MyGlobalStore {
    * Almacén principal del store global encargado de guardar cada shelf
    * declarado
    */
-  store: Map<string, MyShelf<any>> = new Map();
+  private store: Map<string, MyShelf<any>> = new Map();
   /**
    * Componentes observadores susbcritos a un shelf particular
    */
-  observers: Map<string, Set<ObserverI>> = new Map();
+  private observers: Map<string, Set<ObserverI>> = new Map();
 
   constructor() {
     if (!!MyGlobalStore.globalStoreInstance) {
@@ -43,7 +43,7 @@ export class MyGlobalStore {
       const sh = gStore.getShelf(shelfName);
       obs.forEach((o) => {
         //notificamos el cambio a los observers
-        o.storeNotify({data: cloneDeep(sh?.data), shelf: shelfName});
+        o?.storeNotify({data: cloneDeep(sh?.data), shelf: shelfName});
       });
     }
   } //end dispatch
@@ -80,8 +80,8 @@ export class MyGlobalStore {
   } //end subscribe
 
   /**
-   * Método que des subscribe un componentes del store global,
-   *  en caso de desubscribirlo correctamente retorna true, en caso de no encontrar el componente
+   * Método que des des-subscribe un componentes del store global,
+   *  en caso de desubscribirlo correctamente retorna true, en caso de no encontrar el componente retorna false
    */
   static unSubscribe(shelfName: string, observer: ObserverI): boolean {
     const gStore = new MyGlobalStore();

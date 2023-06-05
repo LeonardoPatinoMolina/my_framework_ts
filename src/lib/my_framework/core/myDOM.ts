@@ -14,7 +14,7 @@ export class MyDOM {
    * Cuepo completo del árbol declarado de forma horizontal, es decir, las relaciones jerárquicas 
    * están relacionadas por key
    */
-  treeC: Map<string,MyNodeI> = new Map();
+  nodes: Map<string,MyNodeI> = new Map();
   /** Elemento del DOM el cual actua de raíz para el árbol de nodos
    */
   root?: HTMLElement | Element | null;
@@ -48,13 +48,13 @@ export class MyDOM {
     }
     //lo añadimos a las estructuras árbol de muyDOM
     dom.tree = {root: rootNode};
-    dom.treeC.set(firstKey,rootNode);
+    dom.nodes.set(firstKey,rootNode);
     //obtenemos la instancia deS
     const comp = new myModule().rootNode.factory('root',firstKey);
     
     comp.setKey(firstKey);
     dom.tree.root.instance = comp;
-    dom.treeC.get(firstKey)!.instance = comp;
+    dom.nodes.get(firstKey)!.instance = comp;
     
     dom.renderEffect('root');
   }
@@ -109,7 +109,7 @@ export class MyDOM {
    * @param keyNode key del nodo raiz del arbol a notificar
    * @param notify función callback encargada de realizar la notificación
    */
-  static notifyInTree(keyNode: string, notify: (component: MyNodeI)=>void){
+  static notifyInTree(keyNode: string, notify: (node: MyNodeI)=>void){
     const dom = new MyDOM()
     const nodeTarget = MyDOM.getMemberNode(keyNode)!;
     dom.exploreTreeBFS(nodeTarget,notify)
@@ -150,7 +150,7 @@ export class MyDOM {
   static addMember(args: MyNodeI): void{
     if(MyDOM.isInTree(args.key)) return;
     const dom = new MyDOM()
-    dom.treeC.set(args.key, args);
+    dom.nodes.set(args.key, args);
   }
 
   /**
@@ -158,7 +158,7 @@ export class MyDOM {
    */
   static getMemberNode(key: string,): MyNodeI| undefined{
     const dom = new MyDOM();
-    return dom.treeC.get(key);
+    return dom.nodes.get(key);
   }
 
   /**
@@ -175,7 +175,7 @@ export class MyDOM {
    */
   static deleteNode(key: string){
     const dom = new MyDOM()
-    dom.treeC.delete(key);
+    dom.nodes.delete(key);
   }
 
   /**
@@ -184,7 +184,7 @@ export class MyDOM {
    */
   static isInTree(key: string){
     const dom = new MyDOM();
-    return  dom.treeC.has(key);
+    return  dom.nodes.has(key);
   }
   
   /**
@@ -198,6 +198,6 @@ export class MyDOM {
     dom.exploreTreeReverse(dom.tree.root,(node)=>{
       node.instance.clear();
     })
-    dom.treeC.clear();
+    dom.nodes.clear();
   }
 }

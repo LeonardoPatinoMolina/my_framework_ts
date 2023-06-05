@@ -6,6 +6,50 @@
 
 El presente ejercicio es una versión potenciada de uno anterior llamado __[My framework](https://github.com/LeonardoPatinoMolina/my-framework)__, en el cual me propuse crear un framework front-end de _javascript_ desde los cimientos teniendo como única dependencia de terceros __vite__; en esta ocasión fui un paso más adelante y apunté a mejorar muchas carácterísticas que resultaron bastante problemáticas en my framework, ello luego de experimentar con casos de prueva más elavorados.
 
+## __Contenido__
+El contenido que documenta el presente proyecto no comprende cada aspecto de la implementación y estructura en profundidad de las más de __2000__ líneas de código que fueron necesarias para su realización, se limita a documentar los aspectos fundamentales y necesarios para su uso y correcto funcionamiento, de suyo sea que los diagramas mostrarán algunos atributos y métodos que no son tratados de forma concreta en el presente documento.
+
+<!-- - [Diagrama de clases](#) -->
+- [Cuadro comparativo](#cuadro-comparativo-my-framework-vs-my-framework-ts)
+- [Tecnologías](#tecnologías)
+- [Entrada de la app](#entrada-de-la-app)
+- [Modules](#modules)
+  - [Composición modular](#composición-modular)
+  - [Servicios en módulos](#servicios-en-módulos)
+- [Componentes](#componentes)
+  - [MyComponent](#mycomponent)
+- [Decorador MyNode](#decorador-mynode)
+- [Acoplamiento de componentes hijos](#acoplamiento-de-componentes-hijos)
+  - [Acoplamiento en lotes](#acoplamiento-en-lotes)
+- [Ciclo de vida](#ciclo-de-vida)
+  - [LifeComponent](#lifecomponent)
+- [Eventos en línea](#eventos-en-línea)
+- [Formularios controlados](#eventos-en-línea)
+- [Reactividad](#reactividad)
+  - [Algoritmo de reconciliación](#algoritmo-de-reconciliación)
+- [MyDOM](#mydom)
+- [MyGlobalStore](#myglobalstore)
+  - [MyShelf](#myshelf)
+- [MyRouter](#myrouter)
+- [Instalación y ejecución](#instalación-y-ejecución)
+- [Conclusiones](#conclusiones)
+
+
+## __Diagrama de clases__
+Este sencillo diagrama da cuenta de la composición general de las clases que participan del funcionamiento interno de my framework ts, de izquierda a derecha:
+- Las clases __InputController__, __EventController__ y __LifeComponent__ componen a la clase __MyComponent__, esto significa que ellas solo cumplen funciones en la existencia de una instancia de la clase MyComponent, de allí que todas compartan un atributo _owner_ el cual refiere a su instancia propietaria y a su véz, estas son incluidas en atributos de la clase _MyComponent_.
+- La clase __MyComponent__ mantiene una elación de agregación con la clase __MyDOM__, esta última se encarga de administrar y organizar todas las instancias de la primera, y a su véz determina su presencia en tiempo de ejecución.
+- En la parte inferior la clase __MyShelf__ compone a la clase __MyGlobalStore__, esto significa que las funciones de la primera están subordinadas a la segunda, y sus instancias están contenidas en uno de los atributos de la clase __MyGlobalStore__; esta se relaciona con la clase __MyComponent__ en un orden de mediador observador, es aquí donde está implementado el patrón mediador de eventos u observer que los involucra, más adelante se darán más detalles al respecto.
+- La clase __MyRouter__ guarda una relación con la clase __MyComponent__ y la clase __MyDOM__, esto debido a que sus funciones involucran la manipulación directa del renderizado de árboles de componentes.
+- La clase __MyDOM__ casi no posee ningún atributo o método privado, esto debido a que son mayoritariamente estáticos, esta clase no está diseñada para instanciarse con regularidad.
+- por último existe una clase __MyCentralService__ que no guarda ninguna relación directa con las demás clases, esto debido a que se involucra de forma idirecta mediante decoradores. Estos son asuntos internos de my framework ts y no son relevantes durante el desarrollo.
+
+<p align="center">
+  <img src="https://i.postimg.cc/7LcpBT34/Main.jpg" width="70%" height="auto" alt="my framework logo" title="my framework logo">
+</p>
+
+<hr>
+
 My framework apuntaba a ser un reproducción de __[React.js](https://legacy.reactjs.org/)__, pero recientemente he interactuado con otras tecnologías como __[Angular](https://angular.io/)__ y exponerme a otras posibilidades y enfoques influyó directamente en el futuro de este proyecto. El primer gran cambio que salta a la vista es la inclusión de __Typescript__ como base, haciendo que esta inventiva cambie su nombre a __My Framework TS__. Pero este es solo el comienzo, debo admitir que la distancia entre este proyecto y mi anterior es abismal. Señalo a continuación algunos aspectos clave que recibieron ciertas modificaciones algunas importantes otras algo leves.
 
 ## __Cuadro comparativo: My Framework vs My Framework TS__
@@ -40,6 +84,7 @@ root.render(AppModule);
 La clase __MyDOM__ nos porevee una serie de métodos de interés para la estructura general del árbol de componentes, pero realmente son muy pocos los que nos interesan, el primero es el método estático ``createRoot()``, este método establece cuál será la raíz de la app en el __DOM__, este será el pivote y la referencia para renderizar todos los módulos que convengan. Este retorna un objeto con una función _render()_ la cual recibe como parámetro el módulo que se espera sea renderizado en la raíz
 
 El fichero con esta sintaxis inicial es el que debe ser referenciado en nuestra etiuqtea __script__ en nuestro ``index.html`` el cual tendrá la siguiente apariencia:
+
 ~~~HTML
 <!--./index.html -->
 <!DOCTYPE html>
@@ -60,8 +105,8 @@ El fichero con esta sintaxis inicial es el que debe ser referenciado en nuestra 
 
 <hr>
 
-## __Módulos__
-Los módulos son ``representaciones de grupo``, con ellos podemos construir árboles de componentes, injectar __servicios comunes__ y establecer un sistema de parentezco más confiable que en el anterior sistema de árboles sin módulo de __my framework__, esto nos agrega una capa más a la composisción permitiendo granularizar aún más el diseño, mejorar la experiencia de desarrollo, la escalabilidad y capacidad de reutilización.
+## __Modules__
+Los módulos son ``representaciones de grupo``, con ellos podemos construir árboles de componentes, inyectar __servicios comunes__ y establecer un sistema de parentezco más confiable que en el anterior sistema de árboles sin módulo de __my framework__, esto nos agrega una capa más a la composisción permitiendo granularizar aún más el diseño, mejorar la experiencia de desarrollo, la escalabilidad y capacidad de reutilización.
 
 Para la declaración de un nuevo módulo se requiere el uso del decorador __MyModule__, este recive como parámetro __tres (3)__ atributos obliatorios y __tres (3)__ opcionales:
 
@@ -69,7 +114,7 @@ Para la declaración de un nuevo módulo se requiere el uso del decorador __MyMo
 - __rootNode__(obligatorio): se trata del componente que será el pivote sobre el cual se construye el árbol de componentes, este se concidera el componente raíz del módulo.
 - __nodes__(obligatorio): consiste en un arreglo de componentes, siempre que se desee acoplar un componente en el template de otro comonente debe estar seguro que se encuentra declarado como nodo del módulo, para ello debe ser añadido dentro de este arreglo. Si un módulo está compuesto por un solo componente este atributo puede ser un arreglo vacio.
 - __name__(opcional): por defecto, todos los módulos pueden renderizarse como una página de la aplicación, en este sentido este atributo es una cadena de texto que será añadida en el ``document.title`` siempre que este sea el módulo enrutado, en caso de no declararse, el texo será por defecto "title"
-- __services__(opcional): consiste en un arreglo de clases de servicio, estos son los servicios que serán eventualmente injectados por el constructor de los componentes nodo del módulo, más detalles sobre servicios en la sección [servicios](#)
+- __services__(opcional): consiste en un arreglo de clases de servicio, estos son los servicios que serán eventualmente inyectados por el constructor de los componentes nodo del módulo, más detalles sobre servicios en la sección [servicios](#servicios-en-módulos)
 - __modules__(opcional): consiste en un arreglo de módulos, este atributo reune todos los módulos que participan de la composición de este módulo en concreto. En el momento en que se declara un módulo dentro de este atributo, el componente raíz del mismo estará disponible para ser acoplado en el template de los componentes nodo asociados al módulo principal, de esta forma podemos no solo componer una página con componentes, sino tambien con módulos como ya veremos acontinuación.
 
 ### __Composición modular__
@@ -94,7 +139,7 @@ Esta declaración implica la existencia de dos componentes participantes y un m�
 
   <figure align="center">
     <img 
-      src="public/assets/figures/comp_mod_tree.png" 
+      src="https://i.postimg.cc/vBjdwyY9/comp-mod-tree.png" 
       width="300px" height="auto" alt="my framework logo" 
       title="my framework logo"
     >
@@ -115,7 +160,7 @@ Esta declaración implica la existencia de dos componentes participantes y un m�
     @MyModule({
       key: 'my-module',
       name: 'My App',
-      services: [SomeServices],
+      services: [SomeService],
       nodes: [Component1, Component2],
       nodes: [],
       rootNode: AppComponent
@@ -128,7 +173,7 @@ Esta declaración implica la existencia de dos componentes participantes y un m�
   En la siguiente ilustración identificamos los servicios con los pequeños circulos azules de distinto tono, vemos dos árboles de componentes cada uno teniendo a su disposición el servicio declarado en su respectivo módulo. Los servicios en módulos son exclusivos para sus componentes nodos, esto significa que, si un modulo hace parte de la estructura de otro, tal y como se ilustra acontinuación, este no tendrá acceso al sericio declarado en su padre, si así lo desea necesitará declararlo en su decorador con el atributo __services__, de igual forma este podrá tener los servicios que requiera y estarán desponible en cada componente árticipante de su árbol.
 
   <figure align="center">
-    <img src="public/assets/figures/comp_mod_serv_tree.png" width="300px" height="auto" alt="my framework logo" title="my framework logo">
+    <img src="https://i.postimg.cc/J0G4jKn3/comp-mod-serv-tree.png" width="300px" height="auto" alt="my framework logo" title="my framework logo">
   </figure>
 
 <hr>
@@ -265,7 +310,7 @@ Ahora pasamos a los métodos, la clase __MyComponent__ sin contar el método con
 
 clasificados son los siguientes: 
 #### __Constructor__
-- __constructor(svc?: any)__: el método constructor recibe como parámetros un objeto opcional, este puede contener todos los servicios declarados en el módulo, en caso contrario estará vacio, la idea central es poder recibir por injección un servicio compartido entre nodos del mismo modulo en el cual sea provisto. al ser este un parámetro opcional, los componentes hijos no están obligados a pasarlo por la función __super()__ durante herencia, simplemente pueden asignarlo y usarlo a conveniencia, ejemplo:
+- __constructor(svc?: any)__: el método constructor recibe como parámetros un objeto opcional, este puede contener todos los servicios declarados en el módulo, en caso contrario estará vacio, la idea central es poder recibir por inyección un servicio compartido entre nodos del mismo modulo en el cual sea provisto. al ser este un parámetro opcional, los componentes hijos no están obligados a pasarlo por la función __super()__ durante herencia, simplemente pueden asignarlo y usarlo a conveniencia, ejemplo:
   ~~~typescript
   @MyNode({selector: 'my-app'})
   class AppComponent extends MyComponent{
@@ -906,7 +951,7 @@ build: void{
 ``name:`` nombre del modelo del formulario que está siendo controlado.
 ``nameState:`` refiere al campo de texto en el modelo al cual será asociado el valor del input en el que se declara el __inputController__.
 
-``callback(value):`` este parámero es opcional, recibe como parámetro el valor actual del input y obligatoriamente debe retornar una cadena de texto que corresponde al nuevo valor luego de realizarle los cambios de nuestro interés. Es a travéz de este callback que podemos controlar el valor ingresado en la etiqueta con la garantía de la peristencia de la información entre re-renderizados.
+``callback(value):`` este parámero es opcional, consiste en una función que recibe como parámetro el valor actual del input y obligatoriamente debe retornar una cadena de texto que corresponde al nuevo valor luego de realizarle los cambios de nuestro interés. Es a travéz de este callback que podemos controlar el valor ingresado en la etiqueta con la garantía de la peristencia de la información entre re-renderizados.
 
 #### __Últimas apreciaciones__
 Es importante recalcar que esta implementación no consiste en formularios reactivos, sino formularios controlados con persistencia de datos.
@@ -916,29 +961,65 @@ Es importante recalcar que esta implementación no consiste en formularios react
 ## __Reactividad__
 La reactividad en my framework ts opera bajo un ``algoritmo de reconciliación``, para ello emplea un __virtual DOM__ este consiste en un __árbol n-ario__ que funge como una representación abstracta del árbol de nodos HTML del componente, en cada refresco de la vista el algoritmo realiza una comparación entre el árbol de nodos del componente y el DOM en busca de discrepancias (_mismatches_), en caso de hallarlas, ejecuta operaciones especializadas para reconciliar ámbas esctructuras primando la del árbol virtual sobre el  DOM.
 
-### __Criterios de discreopncias (mismatches criteria)__
-Los criterios a los que se rige la reconciliación están clasificados en 3:
+### __Criterios de discrepancias (mismatches criteria)__
+Los criterios a los que se rige la reconciliación están clasificados en 2 tipos:
 
-- __Cualitativos__: Son todas aquellas discrepancias donde un nodo presenta una diferencia en sus atributos o aspecto general, un ejemplo puede ser que un nodo posea un atributos con un valores distintos o, la ausencia o presencia de algunos atributos. Otro aspecto comparado es el tipo de nodo, un ejemplo sería que uno de ellos fuese un "div" y el otro un "span". 
-- __Cuantitativos__: 
-- __Estructurales__: 
+- __Cualitativos__: Son todas aquellas discrepancias donde un nodo presenta una diferencia en sus ``atributos`` o en su ``tagName``, algunos ejemplos de una discrepancia cualitativa: 
 
+~~~html
+<!-- diferencia en valores de atributos -->
+<div id="firstName" >content</div>
+>>>
+<div id="secondName" >content</div>
 
+<!-- diferencia en número de atribuytos -->
+<div id="firstName" >content</div>
+>>>
+<div id="firstName" class="content" >content</div>
 
+<!-- diferencia en en tag name -->
+<div id="firstName" class="content" >content</div>
+>>>
+<section id="firstName" class="content" >content</section>
+~~~
 
+- __Cuantitativos__: Son las discrepancias donde la cantidad de nodos en el árbol ha cambiado, ya sea por un aumento o disminución de los mismos:
 
+~~~html
+<article>
+  <h2>title</h2>
+  <p>lorem ipsum dolored</p>
+</article>
+>>>
+>>>
+<article>
+  <h2>title</h2>
+  <p>lorem ipsum dolored</p>
+  <p>end</p>
+</article>
+~~~
 
+Segun sea el criterio, el algoritmo de reconcilñiación decidirá qué tipo de operación debe realizarse sobre el DOM para corresponder el cambio en el viritual DOM. La operación menos costosa implica __modificar, remover o añadir un atributo__, la más costosa implica __re renderizar__ el nodo enteramente. Una discrepancia cuantitativa sule ser la más costosa de reconciliar.
 
-<!-- actalización en proseso -->
-<!--
+### __Algoritmo de reconciliación__
+Para razones de reconsiliación, my framework ts emplea ciertos recursos entre ellos:
+
+- __Virtual DOM__: consiste en una represetación estructural del DOM en memoria, esto con motivos de manipulación ágil de los datos referentes al árbol de nodos del documento.
+- __Algoritmos de búsqueda en profundidad__: consiste en un alforitmo que mapea los virtual DOM de forma profunda en búsqueda de discrepancias basado en los criterios previamente mencionados.
+- __Acciones de reconciliación__: son operaciones especificas que realizar la concicliación entre el DOM ey el virtualDOM una vez identificada la discreancia.
+
+La principal ventaja de este enfoque de reactividad frente al anterior usado por my framework, es el nivel de precición a la hora de manipular el DOM, mientras que anteriormente cualquier actualizacion de la vista implicaba un redibujado de todo el árbol de nodos del componente, ahora solo se redibuja el nodo que presenta el cambio, mejorando la experiencia de usuario y aliviando muchas preocupaciónes en la etapa de desarrollo.
+
+<hr>
+
 ## __MyDOM__
-A esta entidad me refiero cuando hablo de árbol de componentes, consiste en una instancia única que sigue el patrón __Singleton__ pues solo debe existir uno en todo la app. Este no es un __virtual dom__, pero cumple un rol semejante, es gracias a esta entidad que existe un pivote, un soporte sobre el cual ensamblar la estrcutura general de todos los componentes que se encuentren en funciones. Aspectos como sus familias, su petenencia al árbol y la raíz principal.
+A esta entidad me refiero cuando hablo de árbol de componentes, consiste en una instancia única que sigue el patrón __Singleton__ pues solo debe existir uno en todo la app. Su propósito es fungir como pivote, como soporte sobre el cual ensamblar la estructura general de todos los componentes que se encuentren en funciones, además de converger en él lógica general respecto a ciertas operaciones realizabes sobre el __virtual DOM__ de forma generalizada.
 
 ### __Atributos__
-MyDOM cuenta con __cuatro__ atributos públicos, los cuales no tienen una trascendencia mayor a la lógica interna del framework, pero de igual forma conviene conocerles:
+MyDOM cuenta con __tres 3__ atributos públicos, los cuales no tienen una trascendencia mayor a la lógica interna del framework, pero de igual forma conviene conocerles:
 
-- __family__: este atributo es un objeto __Map__ que almacena estructuras __Set__ las cuales encapsulan referencias a los componentes hijos de cada componente en funciones, es decir, que están siendo renderizados. Cada set es indexado por una cadena de texto correspondiente a la key única del componente padre.
-- __nodes__: este atributo es un objeto __Map__ que almacena las refernencias a todos los componentes que se encuentren en funciones, indexados por su propia key.
+- __tree__: este atributo contiene el virtual DOM general generado durante el renderizado inicial de la aplicación o de la página actual en caso de utiliar el enrutador. Su propósito es netamente para renderizados iniciales.
+- __nodes__: este atributo es un objeto __Map__ que almacena las referencias a todos los nodos de los componentes que se encuentren en funciones, indexados por su propia key. Este atributo es el que será utilizado para propagar eventos y demás operaciones internas.
 - __root__: este atributo almacena una referencia a la raíz de la aplicación, la cual es el elemento del DOM en el cual se renderiza el árbol, un ejemplo podía ser:
 
     ~~~Html
@@ -946,77 +1027,68 @@ MyDOM cuenta con __cuatro__ atributos públicos, los cuales no tienen una trasce
     ~~~
 
 ### __Métodos__
-los métodos de la entidad MyDOM son todos estáticos, cuenta con __doce__ métodos de los cuales están destinados para usarse en la lógica interna del framework, sin embargo, algunos pueden ser de utilidad para el uso regular, por ello conviene conocerlos:
+los métodos de la entidad MyDOM son en su mayoría estáticos, cuenta con __once 11__ métodos estáticos de los cuales están destinados para usarse en la lógica interna del framework, sin embargo, algunos pueden ser de utilidad para el uso regular, por ello conviene conocerlos:
 
-- __clearDOM()__: método encargado de vaciar y eliminar todos los datos del árbol, este método tiene el propósito de ser empleado en el enrutador, tema que será tratado más adelante.
-- __createRoot(root)__: método encargado de asignar el elemento del dom que será la raíz del árbol de componentes, ya en el ejemplo de la entrada de la app se pudo observar su uso, este recibe como parámetro el elemento destinado a este fin.
-- __getMember(key)__: función encargada de retornar el componente del árbol que corresponda a la ``key`` que se recibe como parámetro.
-- __getFamily(parent)__: método que retorna la estructura ``Set`` que almacena todos los componentes hijos del componente padre que será recibido como parámetro.
-- __initFamily(parent)__: método encargado de inicializar un espacio del atributo ``family`` del árbol para un componente en caso de poseer componentes hijos. recibe como parámetro el componente padre.
-- __memberCompare(member)__: este método recibe como parámetro la instancia de un componente y realiza una validación en la que verifica si el presente componente es miembro del árbol, retorna ``true`` si esto es así, y ``false`` si no lo es.
-- __removeChild(parent, child)__: método encargado de remover un componente hijo de la familia de un componente padre, para ello recibe como parametro el componente _child_ el cual será removido y el componente __parent__ que es el padre.
-- __removeFamily(parent)__: método encargado de remover una familia entera del árbol, este método está orientado a remover familias de componentes que ya no pertenecen al árbol.
-- __setChild(parent, child)__: método encargado de añadir un nuevo hijo a la familia de un componente padre, para ello recibe como parámetro el componente _child_ el cual será añadido y el componente __parent__ que es el padre de la familia.
+- __clearDOM()__: método encargado de vaciar y eliminar todos los datos del árbol, este método tiene el propósito de ser empleado de forma interna en el enrutador, tema que será tratado más adelante.
+- __createRoot(root)__: método encargado de asignar el elemento del DOM que será la raíz del árbol de componentes, ya en el ejemplo de la entrada de la app se pudo observar su uso, este recibe como parámetro el elemento destinado a este fin.
+- __getMemberNode(key)__: función encargada de retornar el nodo correspondiente a la ``key`` que se suministre la cual pertenece a un componente en particular.
+- __deleteNode()__: Método encargado de eliminar un nodo identificado con la key que se suministre en el árbol.
+- __deleteChildNode(parentKey, targetChildKey)__: método encargado de remover un componente hijo, es decir, de removerlo dentro de su componente padre, para ello recibe como parametro la key del componente _targetChildKey_ el cual será removido y la del componente padre _parentKey_.
 - __setGlobalStore(store)__: método encargado de asignar el store global al árbol de componentes, recibe como parámetro el objeto retornado por el método configStore de la clase ``MyGlobalStore`` que será tratada más adelante. 
-- __setMember(newMember)__: este método añade un nuevo miembro a los nodos del árbol, recibe como parámetro una instancia del  componente que será añadido.
-- __removeMember(targetMember)__: método encargado de remover un componente que ya es miembro de los nodos del árbol, este se reibe como parámetro. Este método es empleado por el framework para remover componentes que son des renderizados.
+- __addMember(args)__: este método añade un nuevo miembro a los nodos del árbol, recibe como parámetro una un nodo correspondiente al componente que será añadido.
+- __deleteNode(key)__: método encargado de remover un componente que ya es miembro de los nodos del árbol,recibe la key del nodo a eliminar como parámetro. Este método es empleado por el framework para remover componentes que son des renderizados.
+- __isInTree(key)__: Método encargado de verificar si el componente identificado con la key suministrada existe como miembro activo del árbol.
+- __notifyInTree(keyNode, notify)__: Método encargado de propagar una notificación en un arbol especificado en la key suministrada _keyNode_ de forma descendente partiendo de un nodo raíz especificado, el parámetro _notify_ consiste en una función callback encargada de realizar la notificación mientras que recibe como parámetro el el nodo actual notificado.
+- __notifyInTreeReverse(keyNode, notify)__: Método encargado de propagar una notificación en un arbol especificado en la key suministrada _keyNode_ de forma ascendente partiendo de un nodo raíz especificado, el parámetro _notify_ consiste en una función callback encargada de realizar la notificación mientras que recibe como parámetro el el nodo actual notificado.
 
 <hr>
 
 ## __MyGlobalStore__
-La administración del estado global en my framework es llevada a cabo por la clase MyGlobalStore, esta se vale de otra clase llamada __MyShelf__ y una función auxiliar llamada __createShelf__. AL igual que la clase MyDOM es una entidad de única instancia, y engloba la estructura y lógica necesaría para proveer una serie de datos en forma de store global, este sistema sigue el ``patrón reductor`` para la asignación de funciones de mutabilidad de datos del store, y el ``patrón mediador`` para subscribir componentes reactivos al mismo, pues, efectivamente se trata del estado global de la app.
+La administración del estado global en my framework es llevada a cabo por la clase MyGlobalStore, esta se vale de otra clase llamada __MyShelf__ y una función auxiliar llamada __createShelf__. Al igual que la clase MyDOM es una entidad de única instancia, y engloba la estructura y lógica necesaría para proveer una serie de datos en forma de store global, este sistema sigue el ``patrón reductor`` para la asignación de funciones de mutabilidad de datos del store, y el ``patrón observer`` para subscribir componentes reactivos al mismo, pues, efectivamente se trata del __estado global__ de la app.
 
 ### __Atributos__
  La clase MyGlobalStore cuenta con __dos__ atributos que normalmente no tendremos que manipular:
 
- - __store__: este atributo es un objeto __Map__ que almacena todas las store las cuales consisten en instancias de la clase ``MyShelf``, estánson indexadas por su ``reducerpath``, el cual es una cadena de texto que se declara en la clase MyShelf, cual será detallada más adelante.
+ - __store__: este atributo es un objeto __Map__ que almacena todas las store las cuales consisten en instancias de la clase ``MyShelf``, estás son indexadas por su ``reducerpath``, el cual es una cadena de texto que se declara en la clase MyShelf, la cual será detallada más adelante.
  - __observers__: este atributo es un objeto __Map__ que almacena todos los componentes que se encuentran subscritos a un store concreto.
 
  ### __Métodos__
- Todos los métodos de la clase MyGlobalStore son estáticos, cuenta con __tres__ métodos destinados a declarar, subscribir y despachar:
+ Todos los métodos de la clase MyGlobalStore son estáticos, cuenta con __cuatro 4__ métodos destinados a declarar, subscribir, desubscribir y despachar:
 
  - __configStore(config)__: método encargado de configurar la store principal, este recibe como parámetro un objeto de configuración donde se asignan los reductores de cada Shelf para ser proveidos por la clase. En el ejemplo siguiente, vemos como se utiliza el método para configurar una store que distribuye un shelf de nombre ``userShelf``, con este fin recibe el objeto de configuración el cual posee un atributo ``reducers`` en el cual se asigna, a la propiedad con el nombre correspondiente de userShelf, la instancia de este Shelf, la creación de este último será tratada más adelante.
 
-    ~~~Javascript
-    "use strict"
-    import { MyGlobalStore } from "../lib/my_framework/GlobalStore.js";
-    import { userShef } from "./feature/user.js";
+    ~~~typescript
+    import { MyGlobalStore } from "@my_framework/store/myGlobalStore";
+    import { userShef } from "./feature/user.ts";
 
     export const store = MyGlobalStore.configStore({
       reducers: {
-        [userShef.name]: userShef.shelf
+        [userShef.name]: userShef.shelf,
       }
     });
     ~~~
 
     El paso inmediato a este debe ser establecer el store en el árbol de componentes, para ello recordamos un método mencionado anteriormente: ``setGlobalStorage``, este recibe como parámetro el store, de esta forma la entrada de la app se habrá actualizado de la forma siguiente:
-    ~~~Javascript
-    "use strict"
-    import { MyDOM } from "./lib/my_framework/myDOM.js";
-    import { store } from "./context/store.js";
-    import { App } from './app.js'
 
-    const root = MyDOM.createRoot(document.getElementById("root"));
-    root.render(new App());
-
+    ~~~typescript
+    import { MyDOM } from "@my_framework/core/myDOM";
+    import { store } from "./context/store";
+    import { AppModule } from "./app.module";
+    
     MyDOM.setGlobalStore(store);
+    const root = MyDOM.createRoot(document.getElementById('root'));
+
+    root.render(AppModule);
     ~~~
 
- - __subscribe(shelfName, observer)__: método encargado de subscribir un nuevo componente a un shelf concreto del store, para ello recibe como parámetro el nombre del shelf y la instancia del componente (observer), hemos podido ver un ejemplo con anterioridad, en el cual sibscribimos un componente a través del método ``init()``:
-
-     ~~~Javascript
-      init(){
-        MyGLobalStore.subscribe('products',this);
-      }
-    ~~~
-
-    con esta sintaxisi es suficiente para que el componente en cuentión reaccione a las modificaciónes del store a través del ``dispatch()``.
-
- - __dispatch(shelfName)__: método encargado de propagar el evento de actualización de estado a todos los componentes _observers_ que esten subscritos un ``shelf`` concreto en el store, para ello recibe como parámetro el nombre del shelf en cuestión. A diferencia de los anteriores métodos, este no está destinado a usarse durante el desarrollo, en cambio hace parte de la lógica interna del administfrador de estao global del framework, por eso no tendremos que manipularle.
+  - __subscribe(shelfName, observer)__: método encargado de subscribir un nuevo componente a un shelf concreto del store, para ello recibe como parámetro el nombre del shelf y la instancia del componente (observer).
+  - __unSubscribe(shelfName, observer)__: método encargado de des-subscribir un componente a un shelf concreto del store, para ello recibe como parámetro el nombre del shelf y la instancia del componente (observer).
+  - __dispatch(shelfName, observer)__: método encargado de propagar el evento de actualización de estado a todos los componentes _observers_ que esten subscritos un ``shelf`` concreto en el store, para ello recibe como parámetro el nombre del shelf en cuestión. A diferencia de los anteriores métodos, este no está destinado a usarse durante el desarrollo, en cambio hace parte de la lógica interna del administrador de estado global del framework, por eso no tendremos que manipularle.
 
 ### __MyShelf__
-clase encargada de organizar todo lo relacionado a un estado concreto del store, este es muy parecido a los slide de __Redux Toolkit__, a estas alturas queda claro que el presente proyecto (my framework) es mi cosecha de distintas tecnologías que he podido aprender durante mi tiempo de formación como analista y desarrollador de sistemas de información, y redux es una de ellas
-. para configutar un shelf contamos con una fución auxiliar, opté por este diseño porque no quería que este se convirtiera en una preocupación demaciado grande para la experiencia de desarrollo, relmente nunca estamos en contacto directo con la clase MyShelf, solo con su instancia, pero conviene conocerle:
+clase encargada de organizar todo lo relacionado a un estado concreto del store, este es muy parecido a los slide de __Redux Toolkit__, a estas alturas queda claro que el presente proyecto (my framework ts) es mi cosecha de distintas tecnologías aprendidas durante mi tiempo de formación como analista y desarrollador de sistemas de información, y redux es una de ellas. 
+
+Para configutar un shelf contamos con una función auxiliar, opté por este diseño porque no quería que este se convirtiera en una preocupación demaciado grande para la experiencia de desarrollo, realmente nunca estamos en contacto directo con la clase MyShelf, solo con su instancia, pero conviene conocerle:
 
 #### __Accessors / Getters__
 La clase MyShelf cuenta con __tres__ _accesors_ o _getters_ los cuales tenemos a disposición:
@@ -1030,30 +1102,33 @@ Esta es la función auxiliar a través de la cual podremos crear un shelf, esta 
 
 Continuando con el ejemplo anterior de la configuración del __store__ con el método de la clase MyGLobalStore, ``configStore()``, donde se empleó un shelf de nombre __userShelf__, en este veremos como se creó:
 
-~~~Javascript
-"use strict"
-import { createShelf } from "../../lib/my_framework/GlobalStore.js";
+~~~typescript
+import { createShelf } from "@my_framework/store/myShelf";
 
-export const userShelf = createShelf({
+type UserShelfT = Array<string>
+
+export const userShef = createShelf<UserShelfT>({
   name: 'user',
-  initialData: ['user 1', 'user 2'],
+  initialData: ['user1'],
   reducers: {
-    setUser: (data, payload)=>{
+    setUser: (data, payload: string)=>{
       data.push(payload);
-    },
+      return data;
+    }
   }
 });
 
-export const { setUserDispatch } = userShelf.reducers;
+export const { setUserDispatch } = userShef.actions;
 ~~~
 
-En este ejemplo podemos apreciar le creación de un shelf partiendo de la función __createShelft__, esta recibe como parámetro un objeto de configuración, este objeto se corresponde con los accesors que tratamos previamente, el atributo ``name`` refiere al atributo name del _shelf_, el atributo ``initialData`` se coresponde con el valor que inicializa el atributo data del shelf, este es opcional, por último el atributo ``reducers`` consiste en un objeto que contiene cada _función reductora_, en este caso particular tenemos la función reductora: __setUser__, todas ellas reciben como parámetro la ``data`` del shelf y un valor ``payload``, es menester detenernos aquí y detallar un poco más este asunto:s
+En este ejemplo podemos apreciar le creación de un shelf partiendo de la función __createShelft__, esta recibe como parámetro un objeto de configuración, este objeto se corresponde con los accesors que tratamos previamente, el atributo ``name`` refiere al atributo name del _shelf_, el atributo ``initialData`` se coresponde con el valor que inicializa el atributo data del shelf, este es opcional, por último el atributo ``reducers`` consiste en un objeto que contiene cada _función reductora_, en este caso particular tenemos la función reductora: __setUser__, todas ellas reciben como parámetro la ``data`` del shelf y un valor ``payload``, es menester detenernos aquí y detallar un poco más este asunto:
 
-- __data__: se corresponde con los datos almacenados en el shelf, este parámetro se prevee para poder modificarlo a nuestra conveniencia, es esencialmente una referencia de los datos almacenados, por ello debe tratarse de forma adecuada si no queremos sorpresas.
-- __payload__: este parámetro corresponde a el nuevo valor proveniente de la función dispatch, se espera que sea el recurso necesario para la modifcación deseadad del shelf.
-- __setUserDispatch()__:  podemos verla hasta el final del ejemplo, esta proviene del accesor __reducers__, y su nombre es el mismo que la función reductora con la palabra ``Dispatch`` al final, cosa que la distingue de la función reductora. la nomenclatura se da dinámicamente, el nombre "setUser" es arbitrario facilmente pude elegir otro nombre y este le sería añadido la palabra Dispatch al final:
-~~~Javascript
+- __data__: se corresponde con los datos almacenados en el shelf, este parámetro se prevee para poder modificarlo a nuestra conveniencia, es esencialmente un valor clonado de los datos almacenados, la idea general es tener un punto de partida para cualquier operación, debido a ello para consolidar la modificación debemos retonrarlo luego de mutarlo a conveniencia, de lo contraio no se reflejará el cambio.
+- __payload__: este parámetro corresponde al nuevo valor proveniente de la función dispatch, se espera que sea el recurso necesario para la modifcación deseadada del shelf.
+- __setUserDispatch()__:  podemos verla hasta el final del ejemplo, esta proviene del accesor __actions__, y su nombre es el mismo que la función reductora con la palabra ``Dispatch`` al final, cosa que la distingue de la función reductora. la nomenclatura se da dinámicamente, el nombre "setUser" es arbitrario facilmente pude elegir otro nombre y este le sería añadido la palabra Dispatch al final:
+~~~typescript
   removeUser => removeUserDispatch
+  editUser => editUserDispatch
 ~~~
 
 Una vez aclarado estos puntos quiero recordar lo dicho previamente, este diseño está inspirado en __Redux Toolkit__, quiero mostrar un ejemplo en esta tecnología con el mismo store:
@@ -1064,7 +1139,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 export const userSlice = createSlice({
   name: "user",
-  initialState: ['user 1','user 2'],
+  initialState: ['user 1'],
   reducers: {
     setUser: (state, action)=>{
       state.user.push(action.payload);
@@ -1077,143 +1152,241 @@ export const { setUser } = userSlice.actions;
 
 Es muy parecida la sintaxis, y de nuevo, elegí este diseño porque quise mantenerlo familiar. Aunque su forma de operar es muy distinta.
 
+
+### __Subscripción de componente a estado global__
+Para que un componente se subscriba al _estado global_, es decir, a un shelf concreto dentro del ``store`` primeramente debe implementar la interfaz __ObserverI__ la cual exije la tenencia de un método ``storeNotify()``:
+
+~~~typescript
+export interface ObserverI{
+  storeNotify(charge?: StoreNotifyI): void
+}
+export type StoreNotifyI = {data: any, shelf: string}
+~~~
+
+Este método __storeNotify(charge)__ recibe por inyección un ``objeto`` con los datos actualizados del shelf al cual se encuentra subscrito, un mismo componente puede estar subscritpo __a más de un shelf__ y cualquier actualización del estado de los mismos será resibido por este método, por eso el objeto también contiene un atributo shelf, que indica el nombre del shelf que se encuetra notificando.
+
+Al momento de subscribirse al store empleando el método __subscribe()__, se obtendrán los datos con la información contenida en el shelf al momento de la susbcripción.
+
+La información obtenida ya sea por el método _subscribe_ o por _storeNotify_, son valores clonados del shelf, es decir, en ningún momento consituyen una referencia al valor almacenado en el shelf, esto es así para garantizar la consistencia de la información en cada observer.
+
+Las funciónes ``Dispatch`` son o deben ser el único médio legítimo para mutar los datos alamacenados en un shelf, esto es así para garantizar la notificación oportuna de una actualización en los datos a todos los compoentes que se encuentren subscritos.
+
+Una subscripción en un componente luce de la siguiente manera:
+
+~~~typescript
+import { MyComponent } from "@my_framework/component";
+import { ObserverI, StoreNotifyI} from "@my_framework/store/types/myGlobalStore";
+import { MyGlobalStore } from "@my_framework/store/myGlobalStore";
+import { addCountDispatch } from "./context/shelfs/count";
+
+@MyNode({selector: 'my-counter'}) 
+/*implementamos la interfaz ObserverI*/
+export class CounterComponent extends MyComponent implements ObserverI{
+  /*
+  subscribimos el componente recibiendo el valor del shelf 
+  count al momento de la subscripción
+  */
+  count: number = MyGlobalStore.subscribe('count',this);
+
+  /*
+  declaramos el método storeNotify donde recibiremos el nuevo valor al ser notificado por actualización, decir, si se
+  ejecuta alguna función dispatch. En consecuencia ejecutamos
+  un refresh para reflejar el cambio de la vista
+  */
+  storeNotify(charge: StoreNotifyI): void{
+    this.refresh(()=>{  
+      this.count = charge.data;
+    });
+  }
+
+  build(){
+    return this.template((_)=>`
+    <main>
+      <h2>Mi Contador</h2>
+      <p>${this.count}</p>
+      ${/*ejecutamos el dispatch al dar click sobre el botón add*/}
+      <button ${_.on('click', ()=>addCountDispatch(this.count + 1)))}>add</button>
+    </main>
+    `);
+  }
+}
+~~~
+
+En este sencillo ejemplo tenemos el mismo componente contador que se ilustró anteeriormente, pero en lugar de emplear un estado local, está empleando un estado global, __¿Cómo sería el comportamiento del componente en esta ocación comparado con el anterior?__, pues en esta nueva implementación el estado persisitiría en des-renderizados es decir, el componente podría ser des renderizado y al vovler a renderizarse el estado count seguiría en su valor sin reiniciarse.
+
+### __Desubscripciones del estado global__
+
+Es importante que desubscribamos componentes una vez que han sido desrenderizados, o cada vez que estos no requieran más el estado global al cual se encuentran subscritos. Cada subscripción realizada en un shelf implica espacio de memoria y recursos empleados en su tenencia, el store debe preocuparse que cada observador susbcrito reciba notificación durante actualización de sus datos, y reduciríamos sus preocupaciones desubscribiendo un observador al momento de no requerir tal relación, para ello podemos aprovechar el ciclo de vida del componente, como se mencionó con anterioridad, el método encargado de ejecutar lógica al des renderizar un componente es __destroy()__, es a través de este que ejecutaremos la dessubscripción:
+
+~~~typescript
+import { MyComponent } from "@my_framework/component";
+import { ObserverI, StoreNotifyI} from "@my_framework/store/types/myGlobalStore";
+import { MyGlobalStore } from "@my_framework/store/myGlobalStore";
+import { addCountDispatch } from "./context/shelfs/count";
+
+@MyNode({selector: 'my-counter'}) 
+export class CounterComponent extends MyComponent implements ObserverI{
+  count: number = MyGlobalStore.subscribe('count',this);
+
+  storeNotify(charge: StoreNotifyI): void{
+    this.refresh(()=>{  
+      this.count = charge.data;
+    });
+  }
+
+  build(){
+    return this.template((_)=>`
+    <main>
+      <h2>Mi Contador</h2>
+      <p>${this.count}</p>
+      <button ${_.on('click', ()=>addCountDispatch(this.count + 1)))}>add</button>
+    </main>
+    `);
+  }//end build
+
+  destroy(): void{
+    /*
+    desubscribimos el componente del estado global "count"
+    al momento de desrenderizar el componente observador
+    */
+    MyGlobalStore.unSubscribe('count',this);
+  }
+}
+~~~
+
 <hr>
 
 ## __MyRouter__
-Una vez que hemos conocido la forma de renderizar el componente raíz, a través del método render provisto por el método ``createRoot()`` de la clase __MyDOM__ tenemos como alternativa usar el ``enrutador`` de my framework, este es una entidad única que tiene la capacidad de definir páginas con sus respectivas rutas y estados propios en el historial del navegador.
+Una vez que hemos conocido la forma de renderizar el componente raíz, a través del método render provisto por el método ``createRoot()`` de la clase __MyDOM__ tenemos como alternativa usar el ``enrutador`` de __my framework ts__, este es una entidad única que tiene la capacidad de definir páginas con sus respectivas rutas y estados propios en el historial del navegador.
 
 ### __Atributos__:
-La clase MyRouter cuenta con __dos__ atributos públicos que realmente no están destinados a ser usados regularmente, sin embargo conviene conconerlos:
+La clase MyRouter cuenta con __dos 2__ atributos públicos que, realmente no están destinados a ser usados regularmente, sin embargo conviene conconerlos:
 
-- __currentPage__: refiere al componente raíz que se encuentra renderizado, a fin de cuentas es quien cumple el rol de página en la app.
-- __pages__: son todos los componentes raices que están dispuestos a participar del enrutamiento.
+- __currentPage__: refiere al Modulo que se encuentra renderizado, a fin de cuentas es quien cumple el rol de página en la app.
+- __routes__: consiste en un arreglo de objetos cada uno correspondiente a las rutas con los Modulos que están dispuestos a participar del enrutamiento.
 
-## __Métodos__
+### __Métodos__
 La clase MyRouter además del constructor cuenta con __cuatro__ métodos públicos, todos estáticos y destinados a uso regular.
 
 ### __Constructor__
-El método constructor debe recibir un objeto de configuración en el cual se definan las _painas_, las _rutas_, _params_ y la pestaña _notFound_. Efectivamente este debe inicializarse en la entrada de la app, de esta forma teneos una nueva actualización al fichero main.js:
-~~~Javascript
-//main.js 
-"use strict"
-import { MyDOM } from "./lib/my_framework/myDOM.js";
-import { MyRouter } from "./lib/my_framework/router.js";
-import { store } from "./context/store.js";
-import { PAGES } from "./pages/routes.js";
-import { NotFound } from "./components/notFound.js";
-
-const root = MyDOM.createRoot(document.getElementById("root"));
+El método constructor debe recibir un objeto de configuración en el cual se definan las _rutas_ y la pestaña _notFound_. Efectivamente este debe inicializarse en la entrada de la app, de esta forma tenemos una nueva actualización al fichero ``main.ts``:
+~~~typescript
+//src/main.ts
+import { MyDOM } from "@my_framework/core/myDOM";
+import { MyRouter } from "./lib/my_framework/router/myRouter";
+import { ROUTES } from "./pages/routes";
 
 MyDOM.setGlobalStore(store);
+const root = MyDOM.createRoot(document.getElementById('root'));
 
 //declaración de router - start
 const router = new MyRouter({
-  pages: PAGES, 
+  routes: ROUTES, 
   notFound: NotFound
 });
-  //declaración de router - end
+//declaración de router - end
 
+///pages/routes.ts
+import { Counter } from "./counterModule";
+import { NotFoundModule } from "./notFoundModule";
+import { ResultModule } from "./resultModule";
 
-///pages/routes.js
-import { Counter } from "./counter.js";
-import { NotFound } from "./notFound";
-import { Result } from "./result";
-
-export const PAGES = new Map([
-  [ "/", Counter],
-  ["/otra", NotFound],
-  ["/resultado/:result", Result],
-]);
+export const ROUTES = [
+  {path:"/", modulePage: CounterModule},
+  {path: "/otra", modulePage: NotFoundModule},
+  {path: "/resultado/:result", modulePage: ResultModule},
+];
 ~~~
 
-en este ejemplo vemos la declaración del enrutador, este consiste en inyectar un objeto de configuración cons dos atributos:
-- __pages__: consiste en un objeto __Map__ el cual contiene las rutas como ``key`` y la clase correspondiente a la page como ``value``, algo de suma importancia es que la tercera ruta contiene un _param_, este se declara ubicando dos puntos (:) y su respectivo nombre, en este caso particular tenemos el ``param result``, es a través de este que podremos enviar datos desde una página a otra.
-- __notFound__: este atributo es simplemente un componente o mejor dicho la clase de un componente que tiene la tarea de mostrar una vista que indique el clásico error __not found 404__:
+en este ejemplo vemos la declaración del enrutador, este consiste en inyectar un objeto de configuración con dos atributos:
+- __routes__: consiste en un arreglo de objetos cual contiene las rutas en el atributo ``path`` y el módulo correspondiente a la pagina en el atributo ``modulePage``, algo de suma importancia es que la tercera ruta contiene un _param_, este se declara ubicando dos puntos (:) y su respectivo nombre, en este caso particular tenemos el ``param result``, es a través de este que podremos enviar datos desde una página a otra.
+- __notFound__: este atributo es simplemente un Modulo que tiene la tarea de mostrar una vista que indique el clásico error __not found 404__, en caso de no indicar niguno my framework ts asignará uno por defecto.
 
->``Importante:`` Esta inicialización es de suma importancia porque es desde aquí que empezarán los renderizados de nuestras páginas, como se puede apreciar el método render() no aparece por ninguna parte, y eso se debe a que la entidad MyRouter se encarga de ello internamente, de allí que sea importante una correcta declaración de las rutas y componentes raices.
+>``Importante:`` Esta inicialización es de suma importancia porque es desde aquí que empezarán los renderizados de nuestras páginas, como se puede apreciar el método render() no aparece por ninguna parte, y eso se debe a que la entidad MyRouter se encarga de ello internamente, de allí que sea importante una correcta declaración de las rutas y Modulos.
 
 ### __De uso regular__
 Estos son métodos que tienen tareas específicas, pero fundamentales en el enrutamiento:
 
-- __go(path)__: método encargado de navegar a la ruta que se le administre mediante el parámetro ``path``. Debe asegurarse que la ruta exista caso contrario deberá asociar una pestaña __notFound__.
-- __next()__: método específico para navegar hacia adelante en el historial siempre que haya un registro ``forward``, es decir, que se haya navegado a otra página con anterioridad.
+- __go(path, discreet)__: método encargado de navegar a la ruta que se le administre mediante el parámetro ``path``. Debe asegurarse que la ruta exista caso contrario deberá asociar una pestaña __notFound__, el parametro discreet es opcional y refiere a datos que serán enviados discretamnente entre páginas, estos son almacenados en el estado del historial.
+- __redirect(path, discreet)__: este método cumple con las mismas funciones que el método ``go()``, pero en lugar de añadir un nuevo registro al historial, este reemplaza el registro actual con el de la ruta que se especifique en el parámetro ``path``.
+- __next()__: método específico para navegar hacia adelante en el historial siempre que haya un registro ``forward``, es decir, que se haya navegado regresivamente desde a otra página con anterioridad.
 - __back()__: método específico para navegar hacia atrás en el historial siempre que haya un registro ``back``, es decir, que se haya navegado a una nueva ventana dejando atrás una ruta previa.
-- __params()__: método especial que obtiene los valores params que hayan sido enviados desde la página anterior, lastimosamente el presente enrutamiento es bastante básico y no admite rutas dinámicas en la _url_, por ello hay una regla base que se debe obedecer para enviar params de una page a otra.
+- __paramSlug()__: método especial que obtiene los valores params que hayan sido declarados en la ruta y estén contenidos en la _url_, es decir, params para rutas dinámicas.
+- __queryParams()__: este método obtiene los query params que estén contenidos en la url, retorna un objeto manteniendo la _key_ y el _value_ según corresponda.
+- __discreetData()__: este método obtiene los datos discretos que estén contenidos en estado del historial, estos datos son alojados mediante el segundo parámetro del método ``go`` o en suh defecto ``redirect``.
 
 ### __Params__
-La comunicación entre una página y otra en my framework se realiza de forma discreta mediante ``params``, estos son datos que se adjuntan en la declaración de las rutas y el uso del método __go(path)__. Para abordar mejor este concepto entremos en materia de declaración de rutas.
+La comunicación entre una página es una de los grandes cambios que trae __my framework ts__, en comparación con su antecesor my framework, en esta implementación tenemos cubiertas las rutas dinámicas, es decir, params en la url (slugs), query params y conservamos el medio discreto, en otras palabras contamos con tres formas distintas de comunicar información entre páginas. La declaración de las rutas es relevante para estas cuestiones:.
 
 #### __Declaración de rutas__
- previamente mencionamos la sintaxis de declaración. En caso de desear un ruta sin params podemos escribirla directamente, importante que las barras inclinadas estén al principio del nombre de la ruta y del param, caso contrario obtendremos comportamientos inesperados:
-~~~Javascript
+ previamente mencionamos la sintaxis de declaración. En caso de desear una ruta sin params podemos escribirla directamente, importante que las barras inclinadas estén al principio del nombre de la ruta y del param, caso contrario obtendremos comportamientos inesperados:
+~~~typescript
  "/about" 
  "/about/ticked" 
 ~~~
 
 En otro caso donde precisemos comunicar un dato de una página a otra como puede ser el típico paso de un ``id`` de _producto_ o de _cliente_, declaramos el nombre del param antecedido por una barra inclinada y dos puntos "__/:__"
-~~~Javascript
+~~~typescript
  "/product/:id"
  "/client/:id"
 ~~~
 Realizada esta declaración ahora si podemos navegar entre rutas y de ser necesario, enviar y manipular datos a través de params.
 
 #### __Navegación a ruta__
-Para navegar hasta una ruta específica utilizamos el método __go(path)__, este recibe un string correspondiente a la ruta deseada:
-~~~Javascript
+Para navegar hasta una ruta específica utilizamos el método __go(path, discreet)__, este recibe un string correspondiente a la ruta deseada:
+~~~typescript
 MyRouter.go('/about');
 MyRouter.go('/about/ticked');
 ~~~
 importante que la barra inclinada "/" esté presente siempre, caso contrario obtendremos comportamientos inesperados.
 
 #### __Navegación a ruta con params__
-En caso de que necesitemos comunicar un dato mediante un param utilizamos la siguiente sintaxis:
+En caso de que necesitemos comunicar un dato mediante un param, simplemente lo interpolamos en la ruta, y el lugar donde se declaro el param es reemplazado por el valor que se desea comunicar :
 
-~~~Javascript
+~~~typescript
 const clientId = 10002392;
 
-MyRouter.go('/product/{1001}');
-MyRouter.go(`/client/{${clientId}}`);
+MyRouter.go('/product/1001');
+MyRouter.go(`/client/${clientId}`);
 ~~~
-el valor del param debe estar rodeado por llaves ``"{}"`` esta es una de las reglas que advertí con anterioridad, es una sintaxis necesaria para el adecuado funcionamiento del framework. Estos params pueden ser más de uno sin mayor problema, por ejemplo:
+Estos params pueden ser más de uno sin mayor problema, por ejemplo:
 ~~~Javascript
 //routes
-const PAGES = Map([["/product/:code/:price": Product]])
+const ROUTES = [
+  {path: "/product/:code/:price", modulePage: ProductModule}
+  ]
 
 // navigation
 const productCode = 72304923;
 const productPrice = 2000;
 
-MyRouter.go(`/product/{${productCode}}/{${productPrice}}`);
+MyRouter.go(`/product/${productCode}/${productPrice}`);
+MyRouter.go('/ticket',productCode);
 ~~~
-Aquí otra regla, al ser varios params igual deben estar precedidos por una barra "__/__". 
-> ``A tener en cuenta:`` los params no se ven reflejados en el url, estos son transmitidos de forma discreta, por ello no tienen la capacidad de intercalarse con nombres de ruta como por ejemplo: "/product/:id/popular"
+Recordar siempre que deben estar precedidos por una barra inclinada "__/__". Adicional tenemos unanavegación con datos discretos a la ruta "/ticket"
 
-#### __Obtención de datos params del lado de la página__
-Para la obtención de los params en el cuerpo de la página, el cual no es más que la clase del componente raíz, damos uso del método __params()__, siguiendo con el ejemplo anterior donde navegamos a una página con nombre de ruta ``"product/:code/:price"``, la forma de obtener los datos es la siguiente:
+#### __Obtención de datos params del lado de la página destino__
+Para la obtención de los params en el cuerpo de la página, el cual no es más que el módulo decalrado en ruta, damos uso del método __paramSlug()__, siguiendo con el ejemplo anterior donde navegamos a una página con nombre de ruta ``"product/:code/:price"``, la forma de obtener los datos es la siguiente:
 
-~~~Javascript
-import { MyComponent } from "../lib/my_framework/component.js";
-import { MyRouter } from "../lib/my_framework/router";
+~~~typescript
+//url = http://host/product/12/1200
 
-export class Product extends MyComponent{
-  constructor(){
-    super('product-page'); //key
-  }
+import { MyComponent } from "@my_framework/core/myComponent";
+import { MyNode } from "@my_framework/decorators/myNode";
+import { MyRouter } from "@my_framework/router/myRouter";
 
-  init(){
-    const { code, price } = MyRouter.params(); 
-    this.state = {
-      code,
-      price
-    };
-  }
+@MyNode({selector: 'my-product'})
+export class ProductComponent extends MyComponent{
 
-  build(){
-    return super.template((_)=>`
+  code: string =  MyRouter.paramSLug().code;
+  price: string =  MyRouter.paramSLug().price;
+
+  build(): void{
+    return this.template((_)=>`
     <main>
       <h2>Producto</h2>
-      <p>Producto con el código: ${this.state.code}</p>
-      <p>Precio del producto: ${this.state.price}</p>
+      <p>Producto con el código: ${this.code}</p>
+      <p>Precio del producto: ${this.price}</p>
       <button ${_.on('click', ()=>{MyRouter.back()})}>Volver</button>
     </main>
     `);
@@ -1221,8 +1394,60 @@ export class Product extends MyComponent{
 }
 ~~~
 
-Fácilmente contamos con un componente que invoca al método __MyRouter.params()__ desde su método ``init()``, posteriormente lo almacena en su estado local y lo imprime en su plantilla. Así de sensillo, los nombres que declaramos en las rutas serán los que tendrán los atributos del objeto que será retornado por el método params().
+Contamos con un componente __ProductComponent__ que invoca al método __MyRouter.paramSlug()__ al momento de incializar sus propiedades ``code`` y ``price``, el método retorna un objeto, los nombres que declaramos para los params en las rutas serán los que tendrán los atributos de dicho objeto; de la misma forma podemos obtener los query params y los datos discretos, solo varía el método empleado.
 
 <hr>
 
-Documentación en proceso...
+
+## __Instalación y ejecución__
+Como mencioné al inicio del presente documento, tenemos com odependencia la herramienta __Vite__ y __Typescript__, para su instalación utilicé del manejador de paquetes de node __pnpm__ por ello los comandos que recomiendo para instalar las dependencias implican su uso, sin embargo, tanto __npm__ como __pnpm__ comparten repositorio de módulos de node, por ello puede usar el manejador de paquetes de su preferencia, pero como dije, mi recomendación es __pnpm__:
+
+- para instalación de dependencias:
+~~~bash
+pnpm install
+~~~
+- para ejecución del servidor de desarrollo
+~~~bash
+pnpm dev
+~~~
+- para construcción de versión de producción
+~~~bash
+pnpm build
+~~~
+
+__Y como alternativa puede usar NPM:__
+- para instalación de dependencias:
+~~~bash
+npm install
+~~~
+- para ejecución del servidor de desarrollo
+~~~bash
+npm run dev
+~~~
+- para construcción de versión de producción
+~~~bash
+npm run build
+~~~
+
+<hr>
+
+## __Conclusiones__
+Partiendo de un __8 de mayo de 2023__ hasta finalizar todos los objetivos propuestos el __#######__ del mismo año, fueron #### de aprendizaje continuo. 
+
+Pude familiarizarme mucho más con este lenguaje (_Typescript_) y sus beneficios potenciales, además de poner en práctica bastante lógica y patrones de diseño:
+
+- Patrón __observer__
+- Patrón __singleton__
+- Patrón __decorator__
+- Inyección de dependencias
+- Programación orientada a objetos
+  - Herencia
+  - Polimorfismo
+  - Encapsulamiento
+- Estructuras de datos
+- Maquetación por componentes
+- Modularización
+
+Finalmente, lo que espero con este ejercicio es poder dar cuenta de cómo mi trayectoria con diversas tecnologías me ha aportado __técnicas__ y __enfoques__ útiles para un uso más provechoso de estas herramientas, y de la misma forma recibir nuevos aportes para un mejor desempeño en el desarrollo web __front-end__. Ahora ¡a seguir aprendiendo!
+
+__¿Cuál será el siguiente paso?__ :)

@@ -8,9 +8,7 @@ import { MyTree } from "./myTree.ts";
 import { InputModelI } from "./types/inputController.types.ts";
 import { DirectiveTemplateI } from "./types/myComponents.types.ts";
 
-
 export class MyComponent {
-
   /** 
    * Variable booleana que refleja el estado de inicialización
    * del componente, esta toma el valor de true cuando el 
@@ -23,7 +21,6 @@ export class MyComponent {
    * componente ha sido renderizado
    */
   private rendered: boolean = false;
-
   /** valor único que desitingue al componente dentro del virtual DOM
    * de los demás componentes
    */
@@ -41,7 +38,6 @@ export class MyComponent {
    * Controlador de campos de texo de formularios del componente
    */
   private inputController: InputController = new InputController(this);
-
   /**
    * Motor de plantillas del componente
    */
@@ -60,22 +56,18 @@ export class MyComponent {
    * existencia en el componente
    */
   inputModel?: InputModelI;
-
   /** Propiedades del componente dispuestas
    * representan los datos que son inyectados desde el componente padre
    */
   props?: any;
-
   /** Atributo encargado de subscribir lógica al ciclo de
    * vida del componente
    */
   $: LifeComponent = new LifeComponent(this);
-  
   /**
    * Componente padre
    */
   parent?: MyComponent;
-  
   /**
    * Este método indexa todos los hijos potenciales
    * estos son todos los nodos que han sido declarados en el módulo al que pertenece el presente componente.
@@ -83,12 +75,10 @@ export class MyComponent {
    * un manejo distinto del emparentamiento y la injeción de props
    */
   childAttaching: ChildrenAttachingI = {child: 0 as any, children: 0 as any};
-
   /**
    * Virtual dom local del componente
    */
   myTree: MyTree = new MyTree(this);
-
   /**
    * Slelector de la clase de componente
    */
@@ -136,7 +126,7 @@ export class MyComponent {
   //STATIC METHODS-------------------
 
   static factory(parentkey:string, key: string, props?: any): MyComponent{
-    throw new Error('This method is only available from a class derived from the MyComponent class with the MyNode decorator.')
+    throw new Error('Este método solo está disponible en una clase derivada de MyComponent que haya sido decorada con el decorador "MyNode"')
   };
 
   //PRIVATE METHODS------------
@@ -304,7 +294,6 @@ export class MyComponent {
     if(!targetRoot) throw new Error('no se encontro el nodo del componente')
     this.myTree.update(targetRoot)
     
-    
     //establecemos el estado actual como previo en 
     //espera de una proxima comparación
     MyDOM.notifyInTree(this.key,(node)=>{
@@ -316,9 +305,7 @@ export class MyComponent {
       else node.instance.didUpdate();
     });
   }//end update
-
-
-  
+ 
   /** 
    * Encargada de renderizar el componente en
    * la raiz que se estipule
@@ -345,6 +332,5 @@ export class MyComponent {
     this.destroy();
     this.rendered = false;
     this.firstMount = true;
-    
   }// end clear
 }
